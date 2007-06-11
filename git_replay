@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # vi:tw=0:
-# $Id: git_replay 54.1136.T7mqFgUDFRlT7Rqk+2x3rXdamNs 2007-06-11 07:24:41 -0400 $
+# $Id: git_replay 56.1218.ywNkEoS0qUENFE9K2lPQpm0D5y8 2007-06-11 07:28:54 -0400 $
 
 use strict;
 use DBI;
@@ -21,6 +21,8 @@ if( not -d "$svnco/.git/" ) {
     ebegin "cloning $gitrepo";
     system(qw(git clone --bare), $gitrepo, $ENV{GIT_DIR}) == 0 or die;
     system(qw(cg branch-add origin), $gitrepo) == 0 or die; # needs the GIT_DIR
+    system(qw(cg seek master)) == 0 or die;
+    system(qw(cg reset)) == 0 or die;
     eend 1;
 }
 
