@@ -1,0 +1,15 @@
+#!/bin/bash
+# : nb,v 1.12 2007/01/25 12:23:22 jettero Exp $
+# vi:syntax=gentoo-init-d:
+
+source /sbin/functions.sh
+set -e; trap "eend 997" ERR
+
+for i in *.diffs *.svn_repo *.svn_co; do
+    if [ -d "$i" ]; then
+        ebegin newking $i
+        rm -rf $i
+        eend $?
+    fi
+done
+
