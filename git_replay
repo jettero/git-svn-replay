@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # vi:tw=0:
-# $Id: git_replay 130.2844.vcHha0MuAhq1er9a8N7H2MT88wg 2007-06-11 16:13:24 -0400 $
+# $Id: git_replay 156.3611.0Kd1r2yAYdDqchmy2eBcYFChl3w 2007-06-11 17:36:15 -0400 $
 
 use strict;
 use DBI;
@@ -47,7 +47,7 @@ sub run {
 
         next if $dbm->{already_replayed}{$commit};
 
-        if( &replay($commit, $parent) and &inform_svn ) {
+        if( &replay($commit, $parent) and &inform_svn($commit, $parent) ) {
             $dbm->{already_replayed}{$commit} = 1;
 
         } else {
@@ -81,6 +81,8 @@ sub replay {
 # }}}
 # inform_svn {{{
 sub inform_svn {
+    my ($commit, $parent) = @_;
+
     my @files;
     my @dirs;
 
@@ -100,6 +102,27 @@ sub inform_svn {
         }
 
     }}, '.' );
+
+    if( $parent ) {
+        for my $f (@{ $dbm->{last_files}{$parent} }) {
+            unless( -f $f ) {
+                einfon "removing file \"$f\" from svn:  ";
+                system(qw(svn rm), $f) == 0 or die;
+                eend 1;
+
+                $dbm->{already_tracking_file}{$f} = 0;
+            }
+        }
+        for my $d (@{ $dbm->{last_dirs}{$parent} }) {
+            unless( -d $d ) {
+                einfon "removing directory \"$d\" from svn:  ";
+                system(qw(svn rm), $d) == 0 or die;
+                eend 1;
+
+                $dbm->{already_tracking_dir}{$d} = 0;
+            }
+        }
+    }
 
     for my $d (@dirs) {
         next if $dbm->{already_tracking_dir}{$d};
@@ -124,6 +147,9 @@ sub inform_svn {
     ebegin "comitting changes to svn";
     system(qw(svn commit -F .msg)) == 0 or die;
     eend 1;
+
+    $dbm->{last_dirs}{$commit}  = \@dirs;
+    $dbm->{last_files}{$commit} = \@files;
 
     return 1;
 }
