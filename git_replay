@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # vi:tw=0:
-# $Id: git_replay 41.1149.UqpGiC3KV0T+xUtNl9AChmlDXKo 2007-06-10 22:28:17 -0400 $
+# $Id: git_replay 39.1083.L58dgvaLEQ4iJZyUlpx7Xa+R2NI 2007-06-10 22:31:28 -0400 $
 
 use strict;
 use DBI;
@@ -12,7 +12,7 @@ my $svnco   = shift @ARGV;
 my $dbfile  = shift @ARGV; unless( -f $dbfile ) { open my $c, "|-", "sqlite3", $dbfile or die $!; local $/ = undef; print $c $_ while <DATA>; }
 
 my $dbo = DBI->connect("dbi:SQLite:$dbfile", {RaiseError=>1});
-my $ins = $dbo->prepare("insert into replay(commithash,parenthash,replayed) values(?,?,?)");
+my $ins = $dbo->prepare("insert into replay(commithash,parenthash) values(?,?)");
 my $upd = $dbo->prepare("update replay set replayed=? where commithash=?");
 
 if( not -d "$svnco/.git/" ) {
@@ -22,14 +22,12 @@ if( not -d "$svnco/.git/" ) {
 
     $dbo->begin_work;
     $dbo->do("delete from replay");
-    open my $in, qw(-| git rev-list --all --parents) or die "error with revlist popen(): $!";
+    open my $in, "-|", qw(git rev-list --all --parents) or die "error with revlist popen(): $!";
     while(<$in>) {
-        warn "in: $_";
         my ($commit, $parent) = split /\s+/;
 
         $ins->execute( $commit, $parent );
     }
-    die "nothing replayed I bet?";
     close $in;
     $dbo->commit;
 }

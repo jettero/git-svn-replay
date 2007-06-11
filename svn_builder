@@ -31,6 +31,7 @@ while [ -n "$1" ]; do
 
     if [ ! -d $cdir/$subdir ]; then
         ebegin "building subdir=$subdir";
+        einfon "svn msg: "
         (cd $cdir && mkdir $subdir && svn add $subdir)
         eend $?
     fi
