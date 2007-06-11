@@ -8,17 +8,31 @@ set -e; trap "eend 997" ERR
 rdir="$1"; shift; if [ -z "$rdir" ]; then eerror "rdir not set"; exit 1; fi
 cdir="$1"; shift; if [ -z "$cdir" ]; then eerror "cdir not set"; exit 1; fi
 
-ebegin "creating svn repo"
-svnadmin create $rdir
-eend $?
-
-if [[ ! $rdir =~ "^/" ]]; then
-    einfo "converting rdir $rdir => \`pwd\`/$rdir"
-    rdir=`pwd`/$rdir
+if [ ! -d $rdir ]; then
+    ebegin "creating svn repo"
+    svnadmin create $rdir
+    eend $?
 fi
 
-ebegin "checking out the new svn"
-einfon "svn msg: ";
-svn co file://$rdir $cdir
-eend $?
+if [ ! -d $cdir ]; then
+    if [[ ! $rdir =~ "^/" ]]; then
+        einfo "converting rdir $rdir => \`pwd\`/$rdir"
+        rdir=`pwd`/$rdir
+    fi
+
+    ebegin "checking out the new svn"
+    einfon "svn msg: ";
+    svn co file://$rdir $cdir
+    eend $?
+fi
+
+while [ -n "$1" ]; do
+    subdir=$1; shift;
+
+    if [ ! -d $cdir/$subdir ]; then
+        ebegin "building subdir=$subdir";
+        (cd $cdir && mkdir $subdir && svn add $subdir)
+        eend $?
+    fi
+done
 
