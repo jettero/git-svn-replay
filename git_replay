@@ -1,39 +1,54 @@
 #!/usr/bin/perl
 # vi:tw=0:
-# $Id: git_replay 39.1083.L58dgvaLEQ4iJZyUlpx7Xa+R2NI 2007-06-10 22:31:28 -0400 $
+# $Id: git_replay 54.1136.T7mqFgUDFRlT7Rqk+2x3rXdamNs 2007-06-11 07:24:41 -0400 $
 
 use strict;
 use DBI;
+use DBM::Deep;
+use Term::GentooFunctions qw(:all);
 
 die "$0 gitrepo svnco replaydb" unless @ARGV == 3;
 
 my $gitrepo = shift @ARGV;
 my $svnco   = shift @ARGV;
-my $dbfile  = shift @ARGV; unless( -f $dbfile ) { open my $c, "|-", "sqlite3", $dbfile or die $!; local $/ = undef; print $c $_ while <DATA>; }
+my $dbfile  = shift @ARGV;
 
-my $dbo = DBI->connect("dbi:SQLite:$dbfile", {RaiseError=>1});
-my $ins = $dbo->prepare("insert into replay(commithash,parenthash) values(?,?)");
-my $upd = $dbo->prepare("update replay set replayed=? where commithash=?");
+my $dbm = new DBM::Deep($dbfile);
 
 if( not -d "$svnco/.git/" ) {
-    system(qw(git clone --bare), $gitrepo, "$svnco/.git") == 0 or die;
-
     local $ENV{GIT_DIR} = "$svnco/.git";
 
-    $dbo->begin_work;
-    $dbo->do("delete from replay");
-    open my $in, "-|", qw(git rev-list --all --parents) or die "error with revlist popen(): $!";
-    while(<$in>) {
-        my ($commit, $parent) = split /\s+/;
-
-        $ins->execute( $commit, $parent );
-    }
-    close $in;
-    $dbo->commit;
+    ebegin "cloning $gitrepo";
+    system(qw(git clone --bare), $gitrepo, $ENV{GIT_DIR}) == 0 or die;
+    system(qw(cg branch-add origin), $gitrepo) == 0 or die; # needs the GIT_DIR
+    eend 1;
 }
 
-__DATA__
-create table replay(
-    commithash text, parenthash text, replayed int,
-    unique(commithash)
-);
+chdir $svnco or die "couldn't chdir into svnco($svnco): $!";
+ebegin "pulling updates from $gitrepo";
+system(qw(cg update)) == 0 or die;
+eend 1;
+
+open my $in, "git rev-list --all --parents | tac |" or die "error with revlist popen(): $!";
+while(<$in>) {
+    my ($commit, $parent) = split /\s+/;
+
+    next if $dbm->{already_replayed}{$commit};
+
+    $dbm->{already_replayed}{$commit} = 1 if
+    &replay($commit, $parent) and &inform_svn;
+}
+close $in;
+
+sub replay {
+    my ($commit, $parent) = @_;
+
+    # ebegin "replaying $commit";
+    # eend 0;
+
+    return 0;
+}
+
+sub inform_svn {
+    return 0;
+}
