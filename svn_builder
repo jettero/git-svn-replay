@@ -37,4 +37,4 @@ while [ -n "$1" ]; do
     fi
 done
 
-svn commit -m "initial build by svn_builder";
+(cd $cdir && svn commit -m "initial build by svn_builder")
