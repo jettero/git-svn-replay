@@ -1,19 +1,21 @@
 #!/usr/bin/perl
 # vi:tw=0:
-# $Id: git_replay 78.1717.P4v4OnzjdJ0xR7S/fWA3brInrAU 2007-06-11 09:46:16 -0400 $
+# $Id: git_replay 130.2844.vcHha0MuAhq1er9a8N7H2MT88wg 2007-06-11 16:13:24 -0400 $
 
 use strict;
 use DBI;
 use DBM::Deep;
 use Term::GentooFunctions qw(:all);
+use File::Find;
 
-die "$0 gitrepo svnco replaydb" unless @ARGV == 3;
+die "$0 gitrepo replaydb svnco" unless @ARGV == 3;
 
 my $gitrepo = shift @ARGV;
-my $svnco   = shift @ARGV;
 my $dbfile  = shift @ARGV;
+my $svnco   = shift @ARGV;
 
-my $dbm = new DBM::Deep($dbfile);
+my $TOP = new DBM::Deep($dbfile); $TOP->{$svnco} = {} unless ref $TOP->{$svnco} eq "HASH";
+my $dbm = $TOP->{$svnco};
 
 &setup;
 &run;
@@ -26,15 +28,13 @@ sub setup {
         ebegin "cloning $gitrepo";
         system(qw(git clone --bare), $gitrepo, $ENV{GIT_DIR}) == 0 or die;
         system(qw(cg branch-add origin), $gitrepo) == 0 or die; # needs the GIT_DIR
-        # NOTE: we are not *in* the git dir, so don't do anything that assumes we're cd'd in there
-        # eg:
-        # system(qw(cg seek master)) == 0 or die;
-        # system(qw(cg reset)) == 0 or die;
         eend 1;
     }
 
     chdir $svnco or die "couldn't chdir into svnco($svnco): $!";
     ebegin "pulling updates from $gitrepo";
+    system(qw(cg seek master)) == 0 or die;
+    system(qw(cg reset)) == 0 or die;
     system(qw(cg update)) == 0 or die;
     eend 1;
 }
@@ -47,8 +47,12 @@ sub run {
 
         next if $dbm->{already_replayed}{$commit};
 
-        $dbm->{already_replayed}{$commit} = 1 if
-        &replay($commit, $parent) and &inform_svn;
+        if( &replay($commit, $parent) and &inform_svn ) {
+            $dbm->{already_replayed}{$commit} = 1;
+
+        } else {
+            last;
+        }
     }
     close $in;
 }
@@ -58,21 +62,69 @@ sub run {
 sub replay {
     my ($commit, $parent) = @_;
 
-    unless( our $here ) {
-        $here ++;
-        system(qw(cg seek master)) == 0 or die;
-        system(qw(cg reset)) == 0 or die;
-    }
+    my $zero = sub {
+        eerror $_[0];
+        eend 0;
+        return 0;
+    };
 
-    ebegin "replaying $commit";
-    system(qw(cg seek), $commit) == 0 or die;
+    einfon "cg seek -- ";
+    system(qw(cg seek), $commit) == 0 or return $zero->("seek $commit error");
     eend 1;
 
-    return 0;
+    ebegin "dumping commit log to .msg";
+    system("git log -r $parent..$commit > .msg") == 0 or die;
+    eend 1;
+
+    return 1;
 }
 # }}}
 # inform_svn {{{
 sub inform_svn {
-    return 0;
+    my @files;
+    my @dirs;
+
+    &File::Find::find({wanted => sub {
+        if( -f $_ ) {
+            unless( $_ eq ".msg" ) {
+                push @files, $File::Find::name;
+            }
+
+        } elsif( -d _ ) {
+            if( m/^\.(?:git|svn)\z/ ) {
+                $File::Find::prune = 1;
+
+            } elsif( not m/^\.{1,2}\z/ ) {
+                push @dirs, $File::Find::name;
+            }
+        }
+
+    }}, '.' );
+
+    for my $d (@dirs) {
+        next if $dbm->{already_tracking_dir}{$d};
+
+        einfon "adding directory \"$d\" to svn:  ";
+        system(qw(svn add), $d) == 0 or die;
+        eend 1;
+
+        $dbm->{already_tracking_dir}{$d} = 1;
+    }
+
+    for my $f (@files) {
+        next if $dbm->{already_tracking_file}{$f};
+
+        einfon "adding file \"$f\" to svn:  ";
+        system(qw(svn add), $f) == 0 or die;
+        eend 1;
+
+        $dbm->{already_tracking_file}{$f} = 1;
+    }
+
+    ebegin "comitting changes to svn";
+    system(qw(svn commit -F .msg)) == 0 or die;
+    eend 1;
+
+    return 1;
 }
 # }}}

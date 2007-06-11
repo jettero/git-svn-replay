@@ -37,3 +37,4 @@ while [ -n "$1" ]; do
     fi
 done
 
+svn commit -m "initial build by svn_builder";
