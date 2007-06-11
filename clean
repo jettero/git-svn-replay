@@ -5,7 +5,7 @@
 source /sbin/functions.sh
 set -e; trap "eend 997" ERR
 
-for i in *.diffs *.svn_repo *.svn_co; do
+for i in *.diffs *.repo *.co; do
     if [ -d "$i" ]; then
         ebegin newking $i
         rm -rf $i

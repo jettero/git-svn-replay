@@ -5,20 +5,10 @@
 source /sbin/functions.sh
 set -e; trap "eend 997" ERR
 
-gdir=gitdiffdumper
-ldir=g
-
 ebegin "cleaning"
-eindent
 ./clean
-x=$?
-eoutdent
-eend $x
-
-ebegin "dumping this repo"
-./diff_dumper /home/git/$gdir/ $ldir.diffs
 eend $?
 
 ebegin "building the svn export"
-./svn_builder $ldir.diffs $ldir.repo $ldir.co
+./svn_builder $ldir.repo $ldir.co
 eend $?
