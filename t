@@ -38,6 +38,21 @@ ebegin "replaying sudoku into svn"
 ./git_replay o.repo s.rdb s.co/sudoku
 eend $?
 
+ebegin "adding more things"
+(cd o.repo
+    date > d1; cg add d1
+    cg commit -m "`date`"
+)
+eend $?
+
+ebegin "replaying sudoku into svn (again)"
+./git_replay o.repo s.rdb s.co/sudoku
+eend $?
+
+ebegin "replaying sudoku into svn (again)"
+./git_replay o.repo s.rdb s.co/sudoku
+eend $?
+
 exit 0 ## -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
 ebegin "building actual svn subdirs";

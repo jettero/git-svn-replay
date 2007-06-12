@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # vi:tw=0:
-# $Id: git_replay 192.4644.fhzfpBGpt1NPi/idv+FTn8DZO/w 2007-06-12 08:29:30 -0400 $
+# $Id: git_replay 197.4757.x6zdD+tUG1nSzkyalYfhMEF+Mok 2007-06-12 08:45:20 -0400 $
 
 use strict;
 use DBI;
@@ -17,7 +17,7 @@ my $gitrepo = shift @ARGV;
 my $dbfile  = shift @ARGV;
 my $svnco   = shift @ARGV;
 
-my $TOP = new DBM::Deep($dbfile); $TOP->{$svnco} = {} unless ref $TOP->{$svnco} eq "HASH";
+my $TOP = new DBM::Deep($dbfile); $TOP->{$svnco} = {} unless $TOP->{$svnco};
 my $dbm = $TOP->{$svnco};
 
 &setup;
@@ -65,14 +65,10 @@ sub run {
 sub replay {
     my ($commit, $parent) = @_;
 
-    my $zero = sub {
-        eerror $_[0];
-        eend 0;
-        return 0;
-    };
+    einfo "REPLAY $commit";
 
     einfon "cg seek -- ";
-    system(qw(cg seek), $commit) == 0 or return $zero->("seek $commit error");
+    system(qw(cg seek), $commit) == 0 or die "seek error";
     eend 1;
 
     ebegin "dumping commit log to .msg";
@@ -81,11 +77,18 @@ sub replay {
 
     ebegin "reversing commit detail location";
     tie my @a, 'Tie::File', ".msg" or die "error tieing .msg: $!";
-    push @a, "----- :: original git commit info :: -------------------";
-    while(1) {
-        last if $a[0] =~ m/^\s*$/;
+    if( @a ) {
+        my $max = 1500;
+        push @a, "----- :: original git commit info :: -------------------";
+        while(1) {
+            last if $a[0] =~ m/^\s*$/;
 
-        push @a, shift @a;
+            push @a, shift @a;
+
+            if( --$max < 0 ) {
+                die "we seem to have hit an infinite loop...";
+            }
+        }
     }
     untie @a;
     eend 1;
@@ -96,6 +99,8 @@ sub replay {
 # inform_svn {{{
 sub inform_svn {
     my ($commit, $parent) = @_;
+
+    einfo "INFORM $commit";
 
     my @files;
     my @dirs;
