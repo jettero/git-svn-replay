@@ -1,0 +1,13 @@
+#!/bin/bash
+# : nb,v 1.12 2007/01/25 12:23:22 jettero Exp $
+# vi:syntax=gentoo-init-d:
+
+source /sbin/functions.sh
+set -e; trap "eend 997" ERR
+
+ebegin "installing"
+rm -f /home/svn/{git_replay,svn_builder}
+einfon; install -v -m 0750 git_replay  /home/svn/
+einfon; install -v -m 0750 svn_builder /home/svn/
+eend $?
+
