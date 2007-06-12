@@ -1,4 +1,13 @@
-$Id: README 39.1251.i3YEt/VCW+Q2jB5tcOZJbMBDOcc 2007-06-12 13:38:48 -0400 $
+$Id: README 48.1514.q/7WDBXmkCyb9cw/tHzfRkU7Rp8 2007-06-12 13:40:41 -0400 $
+
+DISCLAIMER
+
+It's maybe 100% certain that there's bugs in this strange thing.
+
+Please make backups of all your svn and git repositories before you try to use
+this for anything.  Also, please do not blame me if it ruins your repos.  I
+warned you to make backups.
+
 
 
 GIT REPLAY
