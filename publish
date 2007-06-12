@@ -1,0 +1,14 @@
+#!/bin/bash
+# $Id: nb,v 1.12 2007/01/25 12:23:22 jettero Exp $
+# vi:syntax=gentoo-init-d:
+
+source /sbin/functions.sh
+set -e; trap "eend 997" ERR
+
+ebegin "copying up"
+scp -q git_replay index.xml svn_builder README /sbin/functions.sh voltar.org:voltar/git2svn
+eend $?
+
+ebegin "fixing perms"
+ssh voltar.org '(cd voltar/git2svn; chmod 644 *)'
+eend $?

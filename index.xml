@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml-stylesheet type="text/xsl" href="/voltar.xsl"?>
+<!-- vi:tw=100: -->
+
+<page>
+    <title>git2svn</title>
+    <folder date="2007-06-12" title="git2svn">
+        <p> I needed a tool that would let me stuff several git repos into one svn repo so I could
+        browse the source from five logically independant projects in one logically unified
+        <a href="http://trac.edgewall.org/">trac</a> wiki.</p>
+
+        <p>This project will replay a git repo into svn and will automatically keep track of which
+        commits have been replayed and not.  It uses mainly native svn and git commands to do this
+        (so both must be installed).  It carefully preserves the dates and commit log entries into
+        svn (again, using native svn commands to do so).</p>
+
+        <p>It is written (mostly) in perl using many modules from CPAN.</p>
+
+        <p> I wrote this for a specific need.  I didn't even do a particularly good job, but it
+        definitely functions.  I'm sure there are many uses for such a project, particularly if it
+        were done with more care and was a more complete solution.  If you have ideas for this
+        project or would like to take it over and make something really spectactular, then please
+        <a href="/ask_paul.xml">contact me</a> about it. </p>
+    </folder>
+
+    <folder title="distribution">
+
+    <p>
+    <ul>
+        <li><a href="README">README</a></li>
+        <li><a href="git_replay">git_replay</a></li>
+        <li><a href="svn_builder">svn_builder</a></li>
+        <li>
+        <a href="functions.sh">functions.sh</a>
+        &#8212; the optional svn_builder uses this GPL2 gentoo shell script library.
+        </li>
+    </ul>
+    </p>
+
+    </folder>
+
+</page>
