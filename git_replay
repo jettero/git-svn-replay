@@ -1,12 +1,14 @@
 #!/usr/bin/perl
 # vi:tw=0:
-# $Id: git_replay 156.3611.0Kd1r2yAYdDqchmy2eBcYFChl3w 2007-06-11 17:36:15 -0400 $
+# $Id: git_replay 180.4331.6gr1dBWulpQSakbELBGYXhL4tco 2007-06-12 07:25:34 -0400 $
 
 use strict;
 use DBI;
 use DBM::Deep;
 use Term::GentooFunctions qw(:all);
 use File::Find;
+use Date::Parse; # dates in (Date::Manip will not handle git/date-R time...)
+use POSIX; # dates out
 
 die "$0 gitrepo replaydb svnco" unless @ARGV == 3;
 
@@ -147,6 +149,28 @@ sub inform_svn {
     ebegin "comitting changes to svn";
     system(qw(svn commit -F .msg)) == 0 or die;
     eend 1;
+
+    my $date;
+    my $mdate;
+    open my $in, ".msg" or die "error opening commit message: $!";
+    while(<$in>) {
+        # Date:   Sat Mar 24 14:42:29 2007 -0400
+        # 2007-06-11T23:38:06.463364Z
+        if( m/Date:\s+(.+)/ ) {
+            $mdate = $1;
+            if( my $s = str2time($mdate) ) {
+                $date = strftime('%Y-%m-%dT%H:%M:%S.000000Z', gmtime($s));
+            }
+            last;
+        }
+    }
+    close $in;
+
+    if( $date ) {
+        ebegin "changing commit date to $date ($mdate)";
+        system(qw(svn propset --revprop -r HEAD svn:date), $date) == 0 or die;
+        eend 1;
+    }
 
     $dbm->{last_dirs}{$commit}  = \@dirs;
     $dbm->{last_files}{$commit} = \@files;

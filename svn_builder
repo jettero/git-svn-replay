@@ -12,6 +12,13 @@ if [ ! -d $rdir ]; then
     ebegin "creating svn repo"
     svnadmin create $rdir
     eend $?
+
+    prpc=$rdir/hooks/pre-revprop-change
+    ebegin "installing pre-revprop-hook";
+    cp $prpc.tmpl $prpc
+    perl -i -pe 's/svn:log/svn:date/g' $prpc
+    chmod 755 $prpc
+    eend $?
 fi
 
 if [ ! -d $cdir ]; then
