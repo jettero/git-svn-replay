@@ -1,12 +1,13 @@
 #!/usr/bin/perl
 # vi:tw=0:
-# $Id: git_replay 180.4331.6gr1dBWulpQSakbELBGYXhL4tco 2007-06-12 07:25:34 -0400 $
+# $Id: git_replay 192.4644.fhzfpBGpt1NPi/idv+FTn8DZO/w 2007-06-12 08:29:30 -0400 $
 
 use strict;
 use DBI;
 use DBM::Deep;
 use Term::GentooFunctions qw(:all);
 use File::Find;
+use Tie::File;
 use Date::Parse; # dates in (Date::Manip will not handle git/date-R time...)
 use POSIX; # dates out
 
@@ -76,6 +77,17 @@ sub replay {
 
     ebegin "dumping commit log to .msg";
     system("git log -r $parent..$commit > .msg") == 0 or die;
+    eend 1;
+
+    ebegin "reversing commit detail location";
+    tie my @a, 'Tie::File', ".msg" or die "error tieing .msg: $!";
+    push @a, "----- :: original git commit info :: -------------------";
+    while(1) {
+        last if $a[0] =~ m/^\s*$/;
+
+        push @a, shift @a;
+    }
+    untie @a;
     eend 1;
 
     return 1;
