@@ -5,13 +5,18 @@ already found their way into the svn repo.  So far, the git_replay machine
 doesn't handle branching at all.  Well, ... it'll replay the branches, but the
 deltas may not make completely make sense to svn...
 
+./git_replay git+ssh://hostname/path/whatever
+
 SVN BUILDER
 
-The git replayer can be done with svn commands alone.  You don't need to use the
-svn_builder script at all.  Simply point the git_replay package to a checked-out
-svn directory and let it do it's thing.
+The git_replay tool can be used with any checked out svn directory.  You don't
+need to use the svn_builder script at all!  Simply point the git_replay package
+to a checked-out svn directory and let it do it's thing.
 
-If you're like me though, you don't really know how to operate svn...
+If you do not use svn_builder, you'll need to add a pre-revprop-change hook
+that allows svn:date property changes -- that's more trivial than it sounds.
+
+If you're like me though, you don't really know how to operate svn.
 
 To start a new svn mirror-repo:
 
