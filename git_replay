@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # vi:tw=0:
-# $Id: git_replay 197.4757.x6zdD+tUG1nSzkyalYfhMEF+Mok 2007-06-12 08:45:20 -0400 $
+# $Id: git_replay 214.5044.4pfCoaSFubRCHV0mgIBAHaul5v4 2007-06-12 08:53:10 -0400 $
 
 use strict;
 use DBI;
@@ -10,8 +10,11 @@ use File::Find;
 use Tie::File;
 use Date::Parse; # dates in (Date::Manip will not handle git/date-R time...)
 use POSIX; # dates out
+use Getopt::Std;
 
-die "$0 gitrepo replaydb svnco" unless @ARGV == 3;
+my %o; getopts("q", \%o);
+
+&help unless @ARGV == 3;
 
 my $gitrepo = shift @ARGV;
 my $dbfile  = shift @ARGV;
@@ -193,5 +196,19 @@ sub inform_svn {
     $dbm->{last_files}{$commit} = \@files;
 
     return 1;
+}
+# }}}
+
+# "main::HELP_MESSAGE()" and/or "main::VERSION_MESSAGE()" {{{
+sub HELP_MESSAGE {
+    print "git_replay gitrepo replaydb svnco\n\n";
+    print " -q: quiet";
+    exit 0;
+}
+*help = *HELP_MESSAGE;
+
+sub VERSION_MESSAGE {
+    print "version: ", q$Id: git_replay 214.5044.4pfCoaSFubRCHV0mgIBAHaul5v4 2007-06-12 08:53:10 -0400 $, "\n";
+    exit 0;
 }
 # }}}
