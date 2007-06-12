@@ -1,0 +1,52 @@
+#!/usr/bin/perl
+# vi:tw=0:
+# $Id: msgswp_test 52.1155.sBUgkPxq+/AvE9ahsww1P0CoUlY 2007-06-12 14:58:37 -0400 $
+
+use strict;
+use Tie::File;
+use File::Copy qw(cp);
+
+my $file = "/tmp/msg";
+
+open my $out, ">$file" or die $!;
+print $out q(commit ce937836a7ec9d447f08118a2a27d5a9b2df74d6
+Author: Paul Miller <jettero@voltar.org>
+Date:   Sat Apr 7 08:35:59 2007 -0400
+
+This is an enormos commit... I moved all the is_light and is_twohanded overloads
+and filled out the base_subclass properly.  t/60 seems to already check to make
+sure the base_subclass is correct; so it's time to fix t/61!!
+
+);
+close $out;
+
+tie my @a, 'Tie::File', $file or die $!;
+push @a, "----- :: original git commit info :: -------------------";
+
+while(1) {
+    last if $a[0] =~ m/^\s*$/;
+
+    push @a, shift @a;
+}
+untie @a;
+
+use Date::Parse;
+use POSIX;
+
+my ($date, $mdate);
+
+open my $in, $file or die "error opening commit message: $!";
+while(<$in>) {
+    # Date:   Sat Mar 24 14:42:29 2007 -0400
+    # 2007-06-11T23:38:06.463364Z
+    if( m/Date:\s+(.+)/ ) {
+        $mdate = $1;
+        if( my $s = str2time($mdate) ) {
+            $date = strftime('%Y-%m-%dT%H:%M:%S.000000Z', gmtime($s));
+        }
+        last;
+    }
+}
+close $in;
+
+warn "date=$date; mdate=$mdate";

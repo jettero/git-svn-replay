@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # vi:tw=0:
-# $Id: git_replay 225.5267.3HCv7WOn7ReBOt8cM2EjsJH2l3Q 2007-06-12 13:35:29 -0400 $
+# $Id: git_replay 229.5344.BxD8GnYzWwXANqqZg5haNmNAaJE 2007-06-12 14:52:21 -0400 $
 
 use strict;
 use DBM::Deep;
@@ -196,6 +196,9 @@ sub inform_svn {
         ebegin "changing commit date to $date ($mdate)";
         system(qw(svn propset --revprop -r HEAD svn:date), $date) == 0 or die;
         eend 1;
+
+    } else {
+        ewarn "date not found for $commit";
     }
 
     $dbm->{last_dirs}{$commit}  = \@dirs;
@@ -221,5 +224,6 @@ sub q {
     *einfo = *nop;
     *ebegin = *nop;
     *einfon = *nop;
+    *ewarn = *nop;
 }
 # }}}
