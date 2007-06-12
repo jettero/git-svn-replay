@@ -15,23 +15,6 @@ eend $?
 
 ebegin "cloning sudoku to local"
 git clone /home/git/sudoku o.repo
-eindent
-ebegin "adding some things"
-(cd o.repo
-    mkdir test1;
-      echo this is testy> test1/testy
-      echo this is tasty> test1/tasty
-      cg add test1/*y
-      cg commit -m "added test/tasty";
-
-    mkdir rofl;
-      echo laugh out loud > rofl/lol
-      echo laughing my ass off > rofl/lmao
-      cg add rofl/*
-      cg commit -m "added teh laughter"
-)
-eend $?
-eoutdent
 eend $?
 
 ebegin "replaying sudoku into svn"
@@ -40,7 +23,11 @@ eend $?
 
 ebegin "adding more things"
 (cd o.repo
-    date > d1; cg add d1
+    date > d1;
+    mkdir test2;
+    cp -va d1 test2/d1
+    cg add d1 test2/d1
+
     cg commit -m "`date`"
 )
 eend $?
