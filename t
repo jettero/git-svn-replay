@@ -18,7 +18,7 @@ git clone /home/git/mapcgi o.repo
 eend $?
 
 ebegin "replaying mapcgi into svn"
-./git_replay git+ssh://corky/home/code/perl/git2svn/o.repo s.rdb s.co/mapcgi
+./git_replay git+ssh://corky/home/jettero/code/perl/git2svn/o.repo s.rdb s.co/mapcgi
 eend $?
 
 ebegin "adding more things"
