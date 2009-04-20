@@ -1,6 +1,4 @@
 #!/bin/bash
-# $Id: svn_builder 47.1080.VBrTEVMZNJ/AscsvTrecNRxY1cw 2007-06-12 12:49:07 -0400 $
-# vi:syntax=gentoo-init-d:
 
 source /sbin/functions.sh
 set -e; trap "eend 997" ERR
