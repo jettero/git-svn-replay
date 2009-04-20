@@ -3,6 +3,8 @@
 source /sbin/functions.sh
 set -e; trap "eend 997" ERR
 
+# svn_builder repo_dir checked_out_dir project1 project2 project3 project4 project5
+
 rdir="$1"; shift; if [ -z "$rdir" ]; then eerror "rdir not set"; exit 1; fi
 cdir="$1"; shift; if [ -z "$cdir" ]; then eerror "cdir not set"; exit 1; fi
 
