@@ -14,7 +14,7 @@ use Getopt::Std;
 use Pod::Usage;
 
 my %o; getopts("qd:b:", \%o) or pod2usage(); quiet() if $o{q};
-pod2usage unless @ARGV == 3;
+pod2usage unless @ARGV == 2;
 
 my $gitrepo   = shift;
 my $svnco     = File::Spec->rel2abs( shift );
@@ -224,7 +224,7 @@ git_replay - replay git commits into an svn repo
 
 =head1 SYNOPSIS
 
-  git_replay repo.git replay.db checkout_out.svn
+  git_replay [options] repo.git checkout_out.svn
     -q: quiet operations
     -b: branch to pull (default: master)
     -d: database location (default: ./replay.rdb)
