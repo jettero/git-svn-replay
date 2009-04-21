@@ -13,12 +13,13 @@ use POSIX; # dates out
 use Getopt::Std;
 use Pod::Usage;
 
-my %o; getopts("q", \%o) or pod2usage(); quiet() if $o{q};
+my %o; getopts("qd:b:", \%o) or pod2usage(); quiet() if $o{q};
 pod2usage unless @ARGV == 3;
 
-my $gitrepo = shift;
-my $dbfile  = shift;
-my $svnco   = File::Spec->rel2abs( shift @ARGV );
+my $gitrepo   = shift;
+my $svnco     = File::Spec->rel2abs( shift );
+my $dbfile    = $o{d} || "./replay.rdb";
+my $srcbranch = $o{b} || "master";
 
 my $TOP = new DBM::Deep($dbfile); $TOP->{$svnco} = {} unless $TOP->{$svnco};
 my $dbm = $TOP->{$svnco};
@@ -31,7 +32,7 @@ sub setup {
     chdir $svnco or die "couldn't chdir into svnco($svnco): $!";
 
     if( not -d "$svnco/.git/" ) {
-        ebegin "cloning $gitrepo";
+        ebegin "cloning $gitrepo ($srcbranch)";
         systemx(qw(git init));
         systemx(qw(git symbolic-ref HEAD refs/heads/mirror));
         eend 1;
@@ -44,8 +45,8 @@ sub setup {
 
     }
 
-    ebegin "pulling updates from $gitrepo";
-    systemx(qw(git pull), $gitrepo, 'master:mirror') == 0 or die;
+    ebegin "pulling updates from $gitrepo ($srcbranch)";
+    systemx(qw(git pull), $gitrepo, "$srcbranch:mirror") == 0 or die;
     eend 1;
 }
 # }}}
@@ -225,6 +226,26 @@ git_replay - replay git commits into an svn repo
 
   git_replay repo.git replay.db checkout_out.svn
     -q: quiet operations
+    -b: branch to pull (default: master)
+    -d: database location (default: ./replay.rdb)
+
+=head1 OPTIONS
+
+=over
+
+=item B<-q>
+
+Shhhhh
+
+=item B
+
+=back B<-b>
+
+The name of the branch to pull (defaults to master).
+
+=back B<-d>
+
+The location of the database file (defaults to: ./replay.rdb).
 
 =head1 DESCRIPTION
 
