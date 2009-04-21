@@ -74,7 +74,7 @@ sub replay {
     eend 1;
 
     ebegin "dumping commit log to .msg";
-    write_file(".msg" => capturex(qw(git show --quiet)));
+    write_file(".msg" => capturex(qw(git show --stat=65)));
     eend 1;
 
     tie my @a, 'Tie::File', ".msg" or die "error tieing .msg: $!";
