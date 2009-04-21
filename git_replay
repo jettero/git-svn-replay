@@ -15,14 +15,17 @@ use Getopt::Std;
 use Pod::Usage;
 use Carp;
 
-my %o; getopts("qd:b:l:", \%o) or pod2usage(); quiet() if $o{q};
+my %o; getopts("Hhqd:b:l:f:", \%o) or pod2usage(); quiet() if $o{q};
+pod2usage(-verbose=>1) if $o{H};
+pod2usage() if $o{h};
 pod2usage unless @ARGV == 2;
 
-my $gitrepo   = shift;
-my $srcbranch = $o{b} || "master";
-my $svnco     = File::Spec->rel2abs( shift );
-my $dbfile    = $o{d} || "./replay.rdb";
-my $stdoutlog = $o{l};
+my $gitrepo     = shift;
+my $srcbranch   = $o{b} || "master";
+my $svnco       = File::Spec->rel2abs( shift );
+my $dbfile      = $o{d} || "./replay.rdb";
+my $stdoutlog   = $o{l};
+my $patchformat = $o{f} || '%s [%h]%n%n%b%n%aN <%aE>%n%ai%n%H';
 
 my $TOP = new DBM::Deep($dbfile); $TOP->{$svnco} = {} unless $TOP->{$svnco};
 my $dbm = $TOP->{$svnco};
@@ -91,7 +94,7 @@ sub replay {
     eend 1;
 
     ebegin "dumping commit log to .msg";    # subject [hash]\n\n body \n author <email>\n full-hash
-    write_file(".msg" => capturex(qw(git show -s), '--pretty=format:%s [%h]%n%n%b%n%aN <%aE>%n%H'));
+    write_file(".msg" => capturex(qw(git show -s), '--pretty=format:' . $patchformat));
     eend 1;
 
     eoutdent;
@@ -244,29 +247,52 @@ git_replay - replay git commits into an svn repo
     -b: branch to pull (default: master)
     -d: database location (default: ./replay.rdb)
     -l: stdout logfile (default: /dev/null)
+    -f: .msg format
+    -h: this help, -H more help
 
 =head1 OPTIONS
 
 =over
 
+=item B<-H>
+
+This help (B<-h> for less help).
+
 =item B<-q>
 
 Shhhhh
 
-=item B
-
-=back B<-b>
+=item B<-b>
 
 The name of the branch to pull (defaults to master).
 
-=back B<-d>
+=item B<-d>
 
 The location of the database file (defaults to: ./replay.rdb).
 
-=back B<-l>
+=item B<-l>
 
 Git and SVN make a lot of racket.  By default the racket is ignored, but you
 may choose to dump the racket to a file if you wish.
+
+=item B<-f>
+
+The git pretty=format: argument describing the .msg used in svn.  By default,
+it's:
+
+   %s [%h]%n%n%b%n%aN <%aE>%n%ai%n%H
+
+... which looks like this:
+
+    git commit subject
+
+    git commit message body git commit message body
+    git commit message body
+
+    Paul Miller <jettero@cpan.org>
+    ddc7db5df1261cfef79b8bfce524a7b7452ac95d.
+
+=back
 
 =head1 DESCRIPTION
 
