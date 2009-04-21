@@ -7,7 +7,6 @@ use File::Find;
 use File::Slurp qw(write_file);
 use Term::GentooFunctions qw(:all);
 use IPC::System::Simple qw(systemx capturex);
-use Tie::File;
 use Date::Parse; # dates in (Date::Manip will not handle git/date-R time...)
 use POSIX; # dates out
 use Getopt::Std;
@@ -75,27 +74,9 @@ sub replay {
     logging_systemx(qw(git checkout -q), $commit);
     eend 1;
 
-    ebegin "dumping commit log to .msg";
-    write_file(".msg" => capturex(qw(git show --stat=65)));
+    ebegin "dumping commit log to .msg";    # subject [hash]\n\n body \n author <email>\n full-hash
+    write_file(".msg" => capturex(qw(git show -s), '--pretty=format:%s [%h]%n%n%b%n%aN <%aE>%n%H');
     eend 1;
-
-    tie my @a, 'Tie::File', ".msg" or die "error tieing .msg: $!";
-    if( @a and @a > 4) {
-        ebegin "reversing commit detail location";
-        my $max = 1500;
-        push @a, "- :: $gitrepo commit info :: -------------------";
-        while(1) {
-            last if $a[0] =~ m/^\s*$/;
-
-            push @a, shift @a;
-
-            if( --$max < 0 ) {
-                die "we seem to have hit an infinite loop... @a";
-            }
-        }
-        eend 1;
-    }
-    untie @a;
 
     return 1;
 }
