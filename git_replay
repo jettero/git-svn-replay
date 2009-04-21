@@ -7,24 +7,25 @@ use DBM::Deep;
 use File::Spec;
 use File::Find;
 use Term::GentooFunctions qw(:all);
+use IPC::System::Simple qw(systemx capturex);
 use Tie::File;
 use Date::Parse; # dates in (Date::Manip will not handle git/date-R time...)
 use POSIX; # dates out
 use Getopt::Std;
 
-my %o; getopts("q", \%o); &q if $o{q};
+my %o; getopts("q", \%o); q() if $o{q};
 
 &HELP_MESSAGE unless @ARGV == 3;
 
-my $gitrepo = shift @ARGV;
-my $dbfile  = shift @ARGV;
+my $gitrepo = shift;
+my $dbfile  = shift;
 my $svnco   = File::Spec->rel2abs( shift @ARGV );
 
 my $TOP = new DBM::Deep($dbfile); $TOP->{$svnco} = {} unless $TOP->{$svnco};
 my $dbm = $TOP->{$svnco};
 
-&setup;
-&run;
+setup();
+run();
 
 # setup {{{
 sub setup {
@@ -32,34 +33,36 @@ sub setup {
 
     if( not -d "$svnco/.git/" ) {
         ebegin "cloning $gitrepo";
-        system(qw(git clone --no-checkout), $gitrepo, "temp") == 0 or die;
-        system(qw(mv temp/.git .)) == 0 or die;
-        rmdir "temp" or die $!;
+        systemx(qw(git init));
+        systemx(qw(git branch -M master mirror));
         eend 1;
     }
 
     ebegin "pulling updates from $gitrepo";
-    system(qw(git checkout master)) == 0 or die;
-    system(qw(git pull)) == 0 or die;
+    systemx(qw(git checkout mirro))
+    systemx(qw(git reset --hard));
+    systemx(qw(git pull), $gitrepo, 'master:mirror') == 0 or die;
     eend 1;
 }
 # }}}
 # run {{{
 sub run {
-    open my $in, "git rev-list --all --parents | tac |" or die "error with revlist popen(): $!";
+    open my $in, "-|", qw(git rev-list --all --parents --reverse) or die "error with revlist popen(): $!";
+
     while(<$in>) {
         my ($commit, $parent) = split /\s+/;
 
         next if $dbm->{already_replayed}{$commit};
 
-        if( &replay($commit, $parent) and &inform_svn($commit, $parent) ) {
+        if( replay($commit, $parent) and inform_svn($commit, $parent) ) {
             $dbm->{already_replayed}{$commit} = 1;
 
         } else {
             last;
         }
     }
-    close $in;
+
+    close $in or die "error closing git revlist pipe: $!";
 }
 # }}}
 
