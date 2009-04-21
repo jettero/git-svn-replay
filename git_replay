@@ -52,22 +52,14 @@ sub setup {
 # }}}
 # run {{{
 sub run {
-    open my $in, "-|", qw(git rev-list --all --parents --reverse) or die "error with revlist popen(): $!";
+    my @commits = capturex(qw(git rev-list --reverse mirror));
 
-    while(<$in>) {
-        my ($commit, $parent) = split /\s+/;
+    chomp @commits;
 
-        next if $dbm->{already_replayed}{$commit};
-
-        if( replay($commit, $parent) and inform_svn($commit, $parent) ) {
-            $dbm->{already_replayed}{$commit} = 1;
-
-        } else {
-            last;
-        }
+    for my $commit ( grep { !$dbm->{already_replayed}{$_} } @commits ) {
+        $dbm->{already_replayed}{$commit} = 1
+            if replay($commit) and inform_svn($commit);
     }
-
-    close $in or die "error closing git revlist pipe: $!";
 }
 # }}}
 
