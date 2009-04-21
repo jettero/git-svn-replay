@@ -34,13 +34,18 @@ sub setup {
     if( not -d "$svnco/.git/" ) {
         ebegin "cloning $gitrepo";
         systemx(qw(git init));
-        systemx(qw(git branch -M master mirror));
+        systemx(qw(git symbolic-ref HEAD refs/heads/mirror));
         eend 1;
+
+    } else {
+        ebegin "resettting mirror";
+        systemx(qw(git checkout mirror));
+        systemx(qw(git reset --hard));
+        eend 1;
+
     }
 
     ebegin "pulling updates from $gitrepo";
-    systemx(qw(git checkout mirro));
-    systemx(qw(git reset --hard));
     systemx(qw(git pull), $gitrepo, 'master:mirror') == 0 or die;
     eend 1;
 }
