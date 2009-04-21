@@ -12,14 +12,16 @@ use Date::Parse; # dates in (Date::Manip will not handle git/date-R time...)
 use POSIX; # dates out
 use Getopt::Std;
 use Pod::Usage;
+use Carp;
 
-my %o; getopts("qd:b:", \%o) or pod2usage(); quiet() if $o{q};
+my %o; getopts("qd:b:l:", \%o) or pod2usage(); quiet() if $o{q};
 pod2usage unless @ARGV == 2;
 
 my $gitrepo   = shift;
+my $srcbranch = $o{b} || "master";
 my $svnco     = File::Spec->rel2abs( shift );
 my $dbfile    = $o{d} || "./replay.rdb";
-my $srcbranch = $o{b} || "master";
+my $stdoutlog = $o{l};
 
 my $TOP = new DBM::Deep($dbfile); $TOP->{$svnco} = {} unless $TOP->{$svnco};
 my $dbm = $TOP->{$svnco};
@@ -33,20 +35,20 @@ sub setup {
 
     if( not -d "$svnco/.git/" ) {
         ebegin "cloning $gitrepo ($srcbranch)";
-        systemx(qw(git init));
-        systemx(qw(git symbolic-ref HEAD refs/heads/mirror));
+        logging_systemx(qw(git init));
+        logging_systemx(qw(git symbolic-ref HEAD refs/heads/mirror));
         eend 1;
 
     } else {
         ebegin "resettting mirror";
-        systemx(qw(git checkout mirror));
-        systemx(qw(git reset --hard));
+        logging_systemx(qw(git checkout mirror));
+        logging_systemx(qw(git reset --hard));
         eend 1;
 
     }
 
     ebegin "pulling updates from $gitrepo ($srcbranch)";
-    systemx(qw(git pull), $gitrepo, "$srcbranch:mirror") == 0 or die;
+    logging_systemx(qw(git pull), $gitrepo, "$srcbranch:mirror") == 0 or die;
     eend 1;
 }
 # }}}
@@ -70,7 +72,7 @@ sub replay {
     einfo "REPLAY $commit";
 
     einfon "git checkout -- ";
-    systemx(qw(git checkout), $commit);
+    logging_systemx(qw(git checkout), $commit);
     eend 1;
 
     ebegin "dumping commit log to .msg";
@@ -215,6 +217,20 @@ sub quiet {
     *ewarn = *nop;
 }
 # }}}
+# stdoutlog {{{
+sub stdoutlog {
+    return unless $stdoutlog;
+
+    write_file( $stdoutlog, {append=>1}, scalar localtime, @_ );
+}
+# }}}
+# logging_systemx {{{
+sub logging_systemx {
+    my @res = eval { (capturex(@_), "my res pop") };
+    croak $@ unless pop @res;
+    stdoutlog("execvp(@_):\n", @res);
+}
+# }}}
 
 __END__
 
@@ -228,6 +244,7 @@ git_replay - replay git commits into an svn repo
     -q: quiet operations
     -b: branch to pull (default: master)
     -d: database location (default: ./replay.rdb)
+    -l: stdout logfile (default: /dev/null)
 
 =head1 OPTIONS
 
@@ -246,6 +263,11 @@ The name of the branch to pull (defaults to master).
 =back B<-d>
 
 The location of the database file (defaults to: ./replay.rdb).
+
+=back B<-l>
+
+Git and SVN make a lot of racket.  By default the racket is ignored, but you
+may choose to dump the racket to a file if you wish.
 
 =head1 DESCRIPTION
 
