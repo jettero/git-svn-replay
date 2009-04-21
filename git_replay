@@ -102,7 +102,7 @@ sub replay {
 sub inform_svn {
     my ($commit) = @_;
 
-    einfo "INFORM $commit";
+    einfo "INFORM $progress";
     eindent;
 
     my @files;
