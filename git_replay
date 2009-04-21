@@ -130,7 +130,7 @@ sub inform_svn {
         for my $f (@{ $dbm->{last_files}{$parent} }) {
             unless( -f $f ) {
                 einfon "removing file \"$f\" from svn:  ";
-                system(qw(svn rm), $f) == 0 or die;
+                logging_systemx(qw(svn rm), $f);
                 eend 1;
 
                 $dbm->{already_tracking_file}{$f} = 0;
@@ -139,7 +139,7 @@ sub inform_svn {
         for my $d (@{ $dbm->{last_dirs}{$parent} }) {
             unless( -d $d ) {
                 einfon "removing directory \"$d\" from svn:  ";
-                system(qw(svn rm), $d) == 0 or die;
+                logging_systemx(qw(svn rm), $d);
                 eend 1;
 
                 $dbm->{already_tracking_dir}{$d} = 0;
@@ -151,7 +151,7 @@ sub inform_svn {
         next if $dbm->{already_tracking_dir}{$d};
 
         einfon "adding directory \"$d\" to svn:  ";
-        system(qw(svn add), $d) == 0 or die;
+        logging_systemx(qw(svn add), $d);
         eend 1;
 
         $dbm->{already_tracking_dir}{$d} = 1;
@@ -161,14 +161,14 @@ sub inform_svn {
         next if $dbm->{already_tracking_file}{$f};
 
         einfon "adding file \"$f\" to svn:  ";
-        system(qw(svn add), $f) == 0 or die;
+        logging_systemx(qw(svn add), $f);
         eend 1;
 
         $dbm->{already_tracking_file}{$f} = 1;
     }
 
     ebegin "comitting changes to svn";
-    system(qw(svn commit -F .msg)) == 0 or die;
+    logging_systemx(qw(svn commit -F .msg));
     eend 1;
 
     my $date;
@@ -189,7 +189,7 @@ sub inform_svn {
 
     if( $date ) {
         ebegin "changing commit date to $date ($mdate)";
-        system(qw(svn propset --revprop -r HEAD svn:date), $date) == 0 or die;
+        logging_systemx(qw(svn propset --revprop -r HEAD svn:date), $date);
         eend 1;
 
     } else {
@@ -200,8 +200,8 @@ sub inform_svn {
     $dbm->{last_files}{$commit} = \@files;
 
     # svn commits sometimes alters things causing git merge problems (very rare).
-    # this resets everything that's tracked by git
-    system(qw(git reset --hard HEAD)) == 0;
+    # This resets everything that's tracked by git.
+    logging_systemx(qw(git reset --hard));
 
     return 1;
 }
