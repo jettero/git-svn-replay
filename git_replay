@@ -228,7 +228,7 @@ sub stdoutlog {
 sub logging_systemx {
     my @res = eval { (capturex(@_), "my res pop") };
     croak $@ unless pop @res;
-    stdoutlog("execvp(@_):\n", @res);
+    stdoutlog("-- execvp(@_)\n", @res);
 }
 # }}}
 
