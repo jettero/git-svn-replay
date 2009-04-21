@@ -4,6 +4,7 @@ use strict;
 use DBM::Deep;
 use File::Spec;
 use File::Find;
+use File::Slurp qw(write_file);
 use Term::GentooFunctions qw(:all);
 use IPC::System::Simple qw(systemx capturex);
 use Tie::File;
@@ -63,22 +64,16 @@ sub run {
 
 # replay {{{
 sub replay {
-    my ($commit, $parent) = @_;
+    my ($commit) = @_;
 
     einfo "REPLAY $commit";
 
     einfon "git checkout -- ";
-    system(qw(git checkout), $commit) == 0 or die "checkout error";
+    systemx(qw(git checkout), $commit);
     eend 1;
 
-    if( $parent ) {
-        ebegin "dumping commit log to .msg";
-        system("git log -r $parent..$commit > .msg") == 0 or die;
-
-    } else {
-        ebegin "dumping initialization log to .msg";
-        system("git log > .msg") == 0 or die;
-    }
+    ebegin "dumping commit log to .msg";
+    write_file(".msg" => capturex(qw(git show --quiet)));
     eend 1;
 
     tie my @a, 'Tie::File', ".msg" or die "error tieing .msg: $!";
