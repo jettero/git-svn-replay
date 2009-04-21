@@ -54,7 +54,7 @@ sub setup {
     }
 
     ebegin "pulling updates from $gitrepo ($srcbranch)";
-    logging_systemx(qw(git pull), $gitrepo, "$srcbranch:mirror") == 0 or die;
+    logging_systemx(qw(git pull), $gitrepo, "$srcbranch:mirror");
     eend 1;
 }
 # }}}
