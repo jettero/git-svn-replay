@@ -173,24 +173,10 @@ sub inform_svn {
     logging_systemx(qw(svn commit -F .msg));
     eend 1;
 
-    my $date;
-    my $mdate;
-    open my $in, ".msg" or die "error opening commit message: $!";
-    while(<$in>) {
-        # Date:   Sat Mar 24 14:42:29 2007 -0400
-        # 2007-06-11T23:38:06.463364Z
-        if( m/^Date:\s+(\w{3}\s+\w{3}.+[+-]\d{4})\s*$/ ) {
-            $mdate = $1;
-            if( my $s = str2time($mdate) ) {
-                $date = strftime('%Y-%m-%dT%H:%M:%S.000000Z', gmtime($s));
-            }
-            last;
-        }
-    }
-    close $in;
+    if( my $gdate = capturex(qw(git show -s --pretty=format:%at)) ) {
+        my $date = strftime('%Y-%m-%dT%H:%M:%S.000000Z', gmtime($gdate));
 
-    if( $date ) {
-        ebegin "changing commit date to $date ($mdate)";
+        ebegin "changing commit date to $date";
         logging_systemx(qw(svn propset --revprop -r HEAD svn:date), $date);
         eend 1;
 
