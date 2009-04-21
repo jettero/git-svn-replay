@@ -41,7 +41,7 @@ sub setup {
 
     } else {
         ebegin "resettting mirror";
-        logging_systemx(qw(git checkout mirror));
+        logging_systemx(qw(git checkout -q mirror));
         logging_systemx(qw(git reset --hard));
         eend 1;
 
@@ -72,7 +72,7 @@ sub replay {
     einfo "REPLAY $commit";
 
     einfon "git checkout -- ";
-    logging_systemx(qw(git checkout), $commit);
+    logging_systemx(qw(git checkout -q), $commit);
     eend 1;
 
     ebegin "dumping commit log to .msg";
