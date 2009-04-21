@@ -39,7 +39,7 @@ sub setup {
     }
 
     ebegin "pulling updates from $gitrepo";
-    systemx(qw(git checkout mirro))
+    systemx(qw(git checkout mirro));
     systemx(qw(git reset --hard));
     systemx(qw(git pull), $gitrepo, 'master:mirror') == 0 or die;
     eend 1;
