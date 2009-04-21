@@ -15,5 +15,5 @@ set -e; trap "echo ERROR detected, exiting; exit 1" ERR
 
 # this repo has merges in it... better test all the way around
 # ./git_replay -d s.rdb git://github.com/jettero/videodump-pl.git s.co/vd-pl
-  ./git_replay -d s.rdb ../videodump-pl s.co/vd-pl
+  ./git_replay -d s.rdb ~/code/perl/videodump-pl s.co/vd-pl
 
