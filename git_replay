@@ -12,10 +12,10 @@ use Tie::File;
 use Date::Parse; # dates in (Date::Manip will not handle git/date-R time...)
 use POSIX; # dates out
 use Getopt::Std;
+use Pod::Usage;
 
-my %o; getopts("q", \%o); q() if $o{q};
-
-&HELP_MESSAGE unless @ARGV == 3;
+my %o; getopts("q", \%o) or pod2usage(); quiet() if $o{q};
+pod2usage unless @ARGV == 3;
 
 my $gitrepo = shift;
 my $dbfile  = shift;
@@ -214,18 +214,9 @@ sub inform_svn {
 }
 # }}}
 
-# HELP_MESSAGE {{{
-sub HELP_MESSAGE {
-    print "\n\n";
-    print "git_replay gitrepo replaydb svnco\n\n";
-    print " -q: quiet the gentoo-ish messages\n";
-    print "\n";
-
-    exit 0;
-}
-
+# quiet {{{
 sub nop { print @_, "\n" }
-sub q {
+sub quiet {
     *eend = *nop;
     *einfo = *nop;
     *ebegin = *nop;
@@ -233,3 +224,30 @@ sub q {
     *ewarn = *nop;
 }
 # }}}
+
+__END__
+
+=head1 NAME
+
+git_replay - replay git commits into an svn repo
+
+=head1 SYNOPSIS
+
+  git_replay repo.git replay.db checkout_out.svn
+    -q: quiet operations
+
+=head1 DESCRIPTION
+
+=head2 B<repo.git>
+
+The source repo will be untouched, can be remote or local, all git urls will work just fine.
+
+=head2 B<replay.db>
+
+The location of the L<DBM::Deep> commit database.  Warning, this database keeps
+track of which commits have already been replayed. You'll end up with dups and
+conflicts if this gets corrupted... then you'll have to rebuild.  Blulech.
+
+=head1 AUTHOR
+
+Paul Miller C<< <jettero@cpan.org> >>
