@@ -5,6 +5,7 @@ use warnings;
 
 use DBM::Deep;
 use File::Spec;
+use File::Find;
 use File::Slurp qw(write_file slurp);
 use Term::GentooFunctions qw(:all);
 use IPC::System::Simple qw(systemx capturex);
@@ -65,8 +66,13 @@ sub run {
     for my $commit ( @commits ) {
         $progress = "[$cur/$total]:$commit";
 
-        $dbm->{already_replayed}{$commit} = 1
-            if replay($commit) and inform_svn($commit);
+        if( replay($commit) and inform_svn($commit) ) {
+            push @{ $dbm->{replayed_commits_in_order} }, $commit;
+            $dbm->{already_replayed}{$commit} = 1
+
+        } else {
+            edie("no point in continuing, something is wrong");
+        }
 
         $cur ++;
     }
@@ -94,7 +100,7 @@ sub replay {
 # }}}
 # inform_svn {{{
 sub inform_svn {
-    my ($commit, $parent) = @_;
+    my ($commit) = @_;
 
     einfo "INFORM $commit";
     eindent;
@@ -119,7 +125,7 @@ sub inform_svn {
 
     }}, '.' );
 
-    if( $parent ) {
+    if( my $parent = $dbm->{replayed_commits_in_order}[-1] ) {
         for my $f (@{ $dbm->{last_files}{$parent} }) {
             unless( -f $f ) {
                 einfo "removing file \"$f\" from svn:  ";
