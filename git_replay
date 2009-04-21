@@ -1,9 +1,10 @@
 #!/usr/bin/perl
 
 use strict;
+use warnings;
+
 use DBM::Deep;
 use File::Spec;
-use File::Find;
 use File::Slurp qw(write_file slurp);
 use Term::GentooFunctions qw(:all);
 use IPC::System::Simple qw(systemx capturex);
@@ -24,6 +25,8 @@ my $stdoutlog = $o{l};
 
 my $TOP = new DBM::Deep($dbfile); $TOP->{$svnco} = {} unless $TOP->{$svnco};
 my $dbm = $TOP->{$svnco};
+
+my $progress; # cheap way to propagate completeness info to all info messages
 
 setup();
 run();
@@ -53,13 +56,19 @@ sub setup {
 # }}}
 # run {{{
 sub run {
-    my @commits = capturex(qw(git rev-list --reverse mirror));
+    my @commits = capturex(qw(git rev-list --reverse mirror)); chomp @commits;
+       @commits = grep { !$dbm->{already_replayed}{$_} } @commits;
 
-    chomp @commits;
+    my $total = @commits;
+    my $cur = 1;
 
-    for my $commit ( grep { !$dbm->{already_replayed}{$_} } @commits ) {
+    for my $commit ( @commits ) {
+        $progress = "[$cur/$total]:$commit";
+
         $dbm->{already_replayed}{$commit} = 1
             if replay($commit) and inform_svn($commit);
+
+        $cur ++;
     }
 }
 # }}}
@@ -68,9 +77,10 @@ sub run {
 sub replay {
     my ($commit) = @_;
 
-    einfo "REPLAY $commit";
+    einfo "REPLAY $progress";
+    eindent;
 
-    einfo "git checkout -- ";
+    einfo "git checkout";
     logging_systemx(qw(git checkout -q), $commit);
     eend 1;
 
@@ -78,6 +88,7 @@ sub replay {
     write_file(".msg" => capturex(qw(git show -s), '--pretty=format:%s [%h]%n%n%b%n%aN <%aE>%n%H'));
     eend 1;
 
+    eoutdent;
     return 1;
 }
 # }}}
@@ -86,6 +97,7 @@ sub inform_svn {
     my ($commit, $parent) = @_;
 
     einfo "INFORM $commit";
+    eindent;
 
     my @files;
     my @dirs;
@@ -184,6 +196,7 @@ sub inform_svn {
     # This resets everything that's tracked by git.
     logging_systemx(qw(git reset --hard));
 
+    eoutdent;
     return 1;
 }
 # }}}
