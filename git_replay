@@ -70,7 +70,7 @@ sub replay {
 
     einfo "REPLAY $commit";
 
-    einfon "git checkout -- ";
+    einfo "git checkout -- ";
     logging_systemx(qw(git checkout -q), $commit);
     eend 1;
 
@@ -110,7 +110,7 @@ sub inform_svn {
     if( $parent ) {
         for my $f (@{ $dbm->{last_files}{$parent} }) {
             unless( -f $f ) {
-                einfon "removing file \"$f\" from svn:  ";
+                einfo "removing file \"$f\" from svn:  ";
                 logging_systemx(qw(svn rm), $f);
                 eend 1;
 
@@ -119,7 +119,7 @@ sub inform_svn {
         }
         for my $d (@{ $dbm->{last_dirs}{$parent} }) {
             unless( -d $d ) {
-                einfon "removing directory \"$d\" from svn:  ";
+                einfo "removing directory \"$d\" from svn:  ";
                 logging_systemx(qw(svn rm), $d);
                 eend 1;
 
@@ -131,7 +131,7 @@ sub inform_svn {
     for my $d (@dirs) {
         next if $dbm->{already_tracking_dir}{$d};
 
-        einfon "adding directory \"$d\" to svn:  ";
+        einfo "adding directory \"$d\" to svn:  ";
         logging_systemx(qw(svn add), $d);
         eend 1;
 
@@ -141,7 +141,7 @@ sub inform_svn {
     for my $f (@files) {
         next if $dbm->{already_tracking_file}{$f};
 
-        einfon "adding file \"$f\" to svn:  ";
+        einfo "adding file \"$f\" to svn:  ";
         logging_systemx(qw(svn add), $f);
         eend 1;
 
@@ -194,7 +194,6 @@ sub quiet {
     *eend = *nop;
     *einfo = *nop;
     *ebegin = *nop;
-    *einfon = *nop;
     *ewarn = *nop;
 }
 # }}}
