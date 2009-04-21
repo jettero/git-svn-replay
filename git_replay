@@ -4,7 +4,7 @@ use strict;
 use DBM::Deep;
 use File::Spec;
 use File::Find;
-use File::Slurp qw(write_file);
+use File::Slurp qw(write_file slurp);
 use Term::GentooFunctions qw(:all);
 use IPC::System::Simple qw(systemx capturex);
 use Date::Parse; # dates in (Date::Manip will not handle git/date-R time...)
@@ -75,7 +75,7 @@ sub replay {
     eend 1;
 
     ebegin "dumping commit log to .msg";    # subject [hash]\n\n body \n author <email>\n full-hash
-    write_file(".msg" => capturex(qw(git show -s), '--pretty=format:%s [%h]%n%n%b%n%aN <%aE>%n%H');
+    write_file(".msg" => capturex(qw(git show -s), '--pretty=format:%s [%h]%n%n%b%n%aN <%aE>%n%H'));
     eend 1;
 
     return 1;
