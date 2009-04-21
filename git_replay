@@ -251,3 +251,11 @@ conflicts if this gets corrupted... then you'll have to rebuild.  Blulech.
 =head1 AUTHOR
 
 Paul Miller C<< <jettero@cpan.org> >>
+
+=head2 COPYRIGHT
+
+Copyright 2009 Paul Miller -- released under the GPL
+
+=head2 SEE ALSO
+
+perl(1), git(1), svn(1), L<DBM::Deep>, L<IPC::System::Simple>
