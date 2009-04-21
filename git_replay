@@ -1,4 +1,6 @@
 #!/usr/bin/perl
+# vi:tw=0:
+# $Id: git_replay 229.5379.tsZx3g90yqu0wWMVDj0czqB4Mk0 2007-06-13 10:28:46 -0400 $
 
 use strict;
 use DBM::Deep;
@@ -26,20 +28,19 @@ my $dbm = $TOP->{$svnco};
 
 # setup {{{
 sub setup {
-    if( not -d "$svnco/.git/" ) {
-        local $ENV{GIT_DIR} = "$svnco/.git";
+    chdir $svnco or die "couldn't chdir into svnco($svnco): $!";
 
+    if( not -d "$svnco/.git/" ) {
         ebegin "cloning $gitrepo";
-        system(qw(git clone --bare), $gitrepo, $ENV{GIT_DIR}) == 0 or die;
-        system(qw(cg branch-add origin), $gitrepo) == 0 or die; # needs the GIT_DIR
+        system(qw(git clone --no-checkout), $gitrepo, "temp") == 0 or die;
+        system(qw(mv temp/.git .)) == 0 or die;
+        rmdir "temp" or die $!;
         eend 1;
     }
 
-    chdir $svnco or die "couldn't chdir into svnco($svnco): $!";
     ebegin "pulling updates from $gitrepo";
-    system(qw(cg seek master)) == 0 or die;
-    system(qw(cg reset)) == 0 or die;
-    system(qw(cg update)) == 0 or die;
+    system(qw(git checkout master)) == 0 or die;
+    system(qw(git pull)) == 0 or die;
     eend 1;
 }
 # }}}
@@ -68,8 +69,8 @@ sub replay {
 
     einfo "REPLAY $commit";
 
-    einfon "cg seek -- ";
-    system(qw(cg seek), $commit) == 0 or die "seek error";
+    einfon "git checkout -- ";
+    system(qw(git checkout), $commit) == 0 or die "checkout error";
     eend 1;
 
     if( $parent ) {
@@ -82,9 +83,9 @@ sub replay {
     }
     eend 1;
 
-    ebegin "reversing commit detail location";
     tie my @a, 'Tie::File', ".msg" or die "error tieing .msg: $!";
-    if( @a ) {
+    if( @a and @a > 4) {
+        ebegin "reversing commit detail location";
         my $max = 1500;
         push @a, "- :: $gitrepo commit info :: -------------------";
         while(1) {
@@ -93,12 +94,12 @@ sub replay {
             push @a, shift @a;
 
             if( --$max < 0 ) {
-                die "we seem to have hit an infinite loop...";
+                die "we seem to have hit an infinite loop... @a";
             }
         }
+        eend 1;
     }
     untie @a;
-    eend 1;
 
     return 1;
 }
@@ -201,6 +202,10 @@ sub inform_svn {
 
     $dbm->{last_dirs}{$commit}  = \@dirs;
     $dbm->{last_files}{$commit} = \@files;
+
+    # svn commits sometimes alters things causing git merge problems (very rare).
+    # this resets everything that's tracked by git
+    system(qw(git reset --hard HEAD)) == 0;
 
     return 1;
 }
