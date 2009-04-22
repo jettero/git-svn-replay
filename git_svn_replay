@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 
+use Carp;
 use DBM::Deep;
 use File::Spec;
 use File::Find;
@@ -11,20 +12,15 @@ use Term::GentooFunctions qw(:all);
 use IPC::System::Simple qw(systemx capturex);
 use Date::Parse; # dates in (Date::Manip will not handle git/date-R time...)
 use POSIX; # dates out
-use Getopt::Std;
+use Getopt::Long;
 use Pod::Usage;
-use Carp;
 
-my %o; getopts("hqd:b:l:f:", \%o) or pod2usage(); quiet() if $o{q};
-pod2usage(-verbose=>1) if $o{h};
-pod2usage unless @ARGV == 2;
+my $srcbranch   = "master";
+my $dbfile      = "replay.rdb";
+my $patchformat = '%s [%h]%n%n%b%n%aN <%aE>%n%ai%n%H';
+my $stdoutlog;
 
-my $gitrepo     = shift;
-my $srcbranch   = $o{b} || "master";
-my $svnco       = File::Spec->rel2abs( shift );
-my $dbfile      = $o{d} || "./replay.rdb";
-my $stdoutlog   = $o{l};
-my $patchformat = $o{f} || '%s [%h]%n%n%b%n%aN <%aE>%n%ai%n%H';
+my ($svnco, $gitrepo) = process_options();
 
 my $TOP = new DBM::Deep($dbfile); $TOP->{$svnco} = {} unless $TOP->{$svnco};
 my $dbm = $TOP->{$svnco};
@@ -216,6 +212,22 @@ sub logging_systemx {
     my @res = eval { (capturex(@_), "my res pop") };
     croak $@ unless pop @res;
     stdoutlog("-- execvp(@_)\n", @res);
+}
+# }}}
+
+# process_options {{{
+sub process_options {
+    my %o = ( 'q'=>\&quiet, 'h'=>sub{pod2usage(-verbose=>1)},
+        'b=s'=>\$srcbranch, 'd=s'=>\$dbfile, 'l=s'=>\$stdoutlog, 'f=s'=>\$patchformat,
+    );
+
+    GetOptions(%o) or pod2usage();
+    pod2usage unless @ARGV == 2;
+
+    my $g = shift @ARGV;
+    my $s = File::Spec->rel2abs( shift @ARGV );
+
+    return ($s, $g);
 }
 # }}}
 
