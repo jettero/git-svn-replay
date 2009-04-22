@@ -235,11 +235,11 @@ __END__
 
 =head1 NAME
 
-git_svn_replay - replay git commits into an svn repo
+git_svn_replay - replay git commits into a throwaway svn repo
 
 =head1 SYNOPSIS
 
-  git_svn_replay [options] repo.git checkedout_out.svn
+  git_svn_replay [options] repo.git checked_out.svn
     -q: quiet operations
     -b: branch to pull (default: master)
     -d: database location (default: ./replay.rdb)
@@ -247,9 +247,31 @@ git_svn_replay - replay git commits into an svn repo
     -f: .msg format
     -h: help
 
-WARNING:  This will issue svn commands to the checked_out.svn (and the
-corresponding repo).  It is assumed this is a throwaway repo used for nothing
-besides interacting with trac.
+B<repo.git>: The source repo will be untouched, can be remote or local, all git
+urls will work just fine.
+
+B<replay.db>: The location of the L<DBM::Deep> commit database.
+
+B<checked_out.svn>: This will issue svn commands to the checked_out.svn (and
+the corresponding repo).  It is assumed this is a throwaway repo used for
+nothing besides interacting with trac.
+
+=head1 DESCRIPTION
+
+This tool simply replays a git repo into an svn repo for the purpose of using
+svn natively in Trac.  It has the side effect of helping to import more than one
+project into Trac -- something it did not yet support at the time of this
+writing.
+
+The svn repo that this tool creates and uses is assumed to be a throwaway and is
+not meant for people to pull from or push to.  It will most likely get dropped
+and recreated from scratch more than once (from bugs in this app or other
+problems).  This means that the revision numbers will be almost useless and
+patches may not align quite right.
+
+This tool is really I<only> useful for viewing commits in Trac.  It probably has
+no other purpose.
+
 
 =head1 OPTIONS
 
@@ -291,17 +313,20 @@ it's:
 
 =back
 
-=head1 DESCRIPTION
+=head1 DISCLAIMER
 
-=head2 B<repo.git>
+It's maybe 100% certain that there's bugs in this strange thing.
 
-The source repo will be untouched, can be remote or local, all git urls will work just fine.
+Please make backups of all your svn and git repositories before you try to use
+this for anything.  Also, please do not blame me if it ruins your repos.  I
+warned you to make backups.
 
-=head2 B<replay.db>
+Do not attempt to use the generated svn repo as a code repository.
 
-The location of the L<DBM::Deep> commit database.  Warning, this database keeps
-track of which commits have already been replayed. You'll end up with dups and
-conflicts if this gets corrupted... then you'll have to rebuild.  Blulech.
+=head1 REPORTING BUGS
+
+You can report bugs either via rt.cpan.org or via the issue tracking system on
+github.  I'm likely to notice either fairly quickly.
 
 =head1 AUTHOR
 
