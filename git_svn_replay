@@ -239,13 +239,17 @@ git_svn_replay - replay git commits into an svn repo
 
 =head1 SYNOPSIS
 
-  git_svn_replay [options] repo.git checkout_out.svn
+  git_svn_replay [options] repo.git checkedout_out.svn
     -q: quiet operations
     -b: branch to pull (default: master)
     -d: database location (default: ./replay.rdb)
     -l: stdout logfile (default: /dev/null)
     -f: .msg format
     -h: help
+
+WARNING:  This will issue svn commands to the checked_out.svn (and the
+corresponding repo).  It is assumed this is a throwaway repo used for nothing
+besides interacting with trac.
 
 =head1 OPTIONS
 
