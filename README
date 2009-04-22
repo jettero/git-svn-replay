@@ -1,44 +1,16 @@
-DISCLAIMER
+DESCRIPTION
+    This tool simply replays a git repo into an svn repo for the
+    purpose of using svn natively in Trac. It has the side effect
+    of helping to import more than one project into Trac --
+    something it did not yet support at the time of this writing.
 
-It's maybe 100% certain that there's bugs in this strange thing.
+    The svn repo that this tool creates and uses is assumed to be
+    a throwaway and is not meant for people to pull from or push
+    to. It will most likely get dropped and recreated from
+    scratch more than once (from bugs in this app or other
+    problems). This means that the revision numbers will be
+    almost useless and patches may not align quite right.
 
-Please make backups of all your svn and git repositories before you try to use
-this for anything.  Also, please do not blame me if it ruins your repos.  I
-warned you to make backups.
+    This tool is really *only* useful for viewing commits in
+    Trac. It probably has no other purpose.
 
-
-
-GIT REPLAY
-
-The git replay machine uses DBM::Deep to keep from replaying commits that have
-already found their way into the svn repo.
-
-./git_svn_replay git_project7_url /path/to/checked.out.svn/project7
-
-The subdir under the checked out svn is optional.
-
-
-
-SVN BUILDER
-
-The git_svn_replay tool can be used with any checked out svn directory.  You
-don't need to use the svn_builder script at all!  Simply point the
-git_svn_replay package to a checked-out svn directory and let it do it's thing.
-
-If you do not use svn_builder, you'll need to add a pre-revprop-change hook
-that allows svn:date property changes -- that's more trivial than it sounds.
-
-If you're like me though, you don't really know how to operate svn.
-
-To start a new svn mirror-repo:
-
-    ./svn_builder /path/to/svn/repo/ /path/to/checked/out/svn/ [dir1] [dir2] [
-... dirN]
-
-    (You can optionally add directories in the svn to dump your git stuff into.)
-
-To add another directory to the svn repo:
-
-    ./svn_builder /path/to/svn/repo/ /path/to/checked/out/svn/ dir1 [dir2] [ ... dirN]
-
-    (This is really just mkdir dir1, svn add dir1, and svn commit -m "something" ...)

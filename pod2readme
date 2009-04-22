@@ -1,0 +1,12 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Pod::PlainText;
+
+unlink "README";
+
+my $parser = Pod::PlainText->new (sentence => 0, width => 65);
+   $parser->select("DESCRIPTION");
+   $parser->parse_from_file('git_svn_replay' => "README");
