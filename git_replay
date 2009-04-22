@@ -15,9 +15,8 @@ use Getopt::Std;
 use Pod::Usage;
 use Carp;
 
-my %o; getopts("Hhqd:b:l:f:", \%o) or pod2usage(); quiet() if $o{q};
-pod2usage(-verbose=>1) if $o{H};
-pod2usage() if $o{h};
+my %o; getopts("hqd:b:l:f:", \%o) or pod2usage(); quiet() if $o{q};
+pod2usage(-verbose=>1) if $o{h};
 pod2usage unless @ARGV == 2;
 
 my $gitrepo     = shift;
@@ -234,15 +233,11 @@ git_replay - replay git commits into an svn repo
     -d: database location (default: ./replay.rdb)
     -l: stdout logfile (default: /dev/null)
     -f: .msg format
-    -h: this help, -H more help
+    -h: help
 
 =head1 OPTIONS
 
 =over
-
-=item B<-H>
-
-This help (B<-h> for less help).
 
 =item B<-q>
 
