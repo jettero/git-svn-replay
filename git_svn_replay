@@ -223,11 +223,11 @@ __END__
 
 =head1 NAME
 
-git_replay - replay git commits into an svn repo
+git_svn_replay - replay git commits into an svn repo
 
 =head1 SYNOPSIS
 
-  git_replay [options] repo.git checkout_out.svn
+  git_svn_replay [options] repo.git checkout_out.svn
     -q: quiet operations
     -b: branch to pull (default: master)
     -d: database location (default: ./replay.rdb)
