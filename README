@@ -11,14 +11,11 @@ warned you to make backups.
 GIT REPLAY
 
 The git replay machine uses DBM::Deep to keep from replaying commits that have
-already found their way into the svn repo.  So far, the git_replay machine
-doesn't handle branching at all.
+already found their way into the svn repo.
 
-./git_replay git+ssh://hostname/path/whatever/ /path/to/replay.db \
-    /path/to/checked.out.svn/subdir
+./git_replay git_project7_url /path/to/checked.out.svn/project7
 
-The subdir under the checked out svn is optional.  That is all.
-
+The subdir under the checked out svn is optional.
 
 
 
