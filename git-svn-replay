@@ -232,9 +232,12 @@ sub process_options {
     GetOptions(%o) or pod2usage();
 
     if( $create_svn_repo or @add_dir_to_co ) {
-        my $co = shift @ARGV;
+        my $co           = File::Spec->rel2abs( shift @ARGV );
+        $create_svn_repo = File::Spec->rel2abs( $create_svn_repo );
+
         create_svn_repo($create_svn_repo => $co) if $create_svn_repo;
         add_svn_dir($_ => $co) for @add_dir_to_co;
+
         exit;
     }
 
@@ -250,7 +253,27 @@ sub process_options {
 sub create_svn_repo {
     my ($svnr, $co) = @_;
 
-    warn "\e[30;43mTODO: add svn repo: @_\e[m";
+    # automatically skip anything we don't need to bother doing
+    unless( -d $svnr ) {
+        einfo "creating svn repo: $svnr";
+        logging_systemx(svnadmin => 'create', $svnr);
+        eend 1;
+
+        einfo "installing pre-revprop-change (svn:date only) hook";
+            my $prpc_file = "$svnr/hooks/pre-revprop-change";
+            my $prpc_text = slurp("$prpc_file.tmpl");
+               $prpc_text =~ s/svn:log/svn:date/g;
+
+            write_file( $prpc_file => $prpc_text );
+            chmod 0755, $prpc_file or die "chmod() error: $!";
+        eend 1;
+    }
+
+    unless( -d $co ) {
+        einfo "checking out new svn: $svnr -> $co";
+        logging_systemx(qw(svn co), "file://$svnr", $co);
+        eend 1;
+    }
 }
 # }}}
 # add_svn_dir {{{
@@ -258,6 +281,8 @@ sub add_svn_dir {
     my ($cod, $co) = @_;
 
     warn "\e[30;43mTODO: add svn dir: @_\e[m";
+    # (cd $cdir && mkdir $subdir && svn add $subdir)
+    # (cd $cdir && svn commit -m "initial build by svn_builder")
 }
 # }}}
 
