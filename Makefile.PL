@@ -14,6 +14,7 @@ WriteMakefile(
 
     PREREQ_PM => {
         'File::Slurp'           => 0,
+        'File::Path'            => 0,
         'Date::Parse'           => 0,
         'Getopt::Long'          => 0,
         'Term::GentooFunctions' => 0,
@@ -23,7 +24,7 @@ WriteMakefile(
     },
 
     ($ExtUtils::MakeMaker::VERSION ge '6.48'? 
-        (MIN_PERL_VERSION => 5.008,
+        (MIN_PERL_VERSION => 5.006001,
             META_MERGE => {
                 keywords => ['git', 'svn'],
                 resources=> {
