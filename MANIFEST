@@ -3,3 +3,4 @@ Makefile.PL
 note.txt
 README
 t/01_load.t
+MANIFEST
