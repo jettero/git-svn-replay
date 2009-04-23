@@ -242,11 +242,16 @@ git-svn-replay - replay git commits into a throwaway svn repo
 =head1 SYNOPSIS
 
   git-svn-replay [options] repo.git checked_out.svn
+              or -S ... check_out.svn
+              or -s ... checked_out.svn
+
     -q: quiet operations
     -b: branch to pull (default: master)
     -d: database location (default: ./replay.rdb)
     -l: stdout logfile (default: /dev/null)
     -f: .msg format
+    -S: create an svn repo and check it out
+    -s: directory to add to the svn repo
     -h: help
 
 B<repo.git>: The source repo will be untouched, can be remote or local, all git
@@ -274,7 +279,6 @@ patches may not align quite right.
 This tool is really I<only> useful for viewing commits in Trac.  It probably has
 no other purpose.
 
-
 =head1 OPTIONS
 
 =over
@@ -283,20 +287,20 @@ no other purpose.
 
 Shhhhh
 
-=item B<-b>
+=item B<-b> branchname
 
 The name of the branch to pull (defaults to master).
 
-=item B<-d>
+=item B<-d> dbname
 
 The location of the database file (defaults to: ./replay.rdb).
 
-=item B<-l>
+=item B<-l> logfilename
 
 Git and SVN make a lot of racket.  By default the racket is ignored, but you
 may choose to dump the racket to a file if you wish.
 
-=item B<-f>
+=item B<-f> formatstring
 
 The git pretty=format: argument describing the .msg used in svn.  By default,
 it's:
@@ -314,6 +318,42 @@ it's:
     ddc7db5df1261cfef79b8bfce524a7b7452ac95d.
 
 =back
+
+=item B<-S> svnreponame
+
+Create an svn repo and check it out.  It is harmless to specify this if the
+repo already exists -- it will simply skip the creation.
+
+When B<-S> is specified, you may not specify a git repo to pull from, but you
+must specify a location to check out the new svn.
+
+=item B<-s> subdirname
+
+Add a subdirectory to the checked out svn.
+
+When B<-s> is specified, you may not specify a git repo to pull from, but you
+must specify a location where the svn subdir should be added.
+
+=head1 EXAMPLES
+
+Create an svn repo, check it out, and add a few subdirs to it:
+
+    git svn-replay -S s.repo -s blarg1 -s blarg2 -s blarg3 s.co
+
+Add another dir later:
+
+    git svn-replay -s blarg4 s.co
+
+Create an svn repo, check it out, and pull the public branch of repo.git into it:
+
+    git svn-replay -S s.repo s.co
+    git svn-replay -b public repo.git s.co # repeat this every day or hour
+
+Create an svn repo, check it out, create a dir for proj1, another for proj2 ...:
+
+    git svn-replay -S s.repo -s proj1 -s proj2 s.co 
+    git svn-replay -b public proj1-repo.git s.co/proj1 # do this from cron
+    git svn-replay -b maint  proj2-repo.git s.co/proj2 # do this from cron
 
 =head1 DISCLAIMER
 
