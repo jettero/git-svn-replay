@@ -6,6 +6,9 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker;
 
+(open POPEN_SVN, "svn help|" and open POPEN_GIT, "git help|" and close POPEN_SVN and close POPEN_GIT)
+    or die "\n git and svn must be installed and in our path for this tool to function.\n";
+
 WriteMakefile(
     NAME          => 'git-svn-replay',
     AUTHOR        => 'Paul Miller <jettero@cpan.org>',
