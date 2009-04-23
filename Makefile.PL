@@ -41,7 +41,7 @@ sub MY::postamble {
     my $postamble = <<'MAKE_FRAG';
 
 README: git-svn-replay
-	perl -MPod::Text -e '$p = Pod::Text->new (sentence => 0, width => 65); $p->select("DESCRIPTION"); $p->parse_from_file( git-svn-replay => "README");'
+	perl -MPod::Text -e '$$p = Pod::Text->new (sentence => 0, width => 65); $$p->select("DESCRIPTION"); $$p->parse_from_file( "git-svn-replay" => "README");'
 
 MAKE_FRAG
 
