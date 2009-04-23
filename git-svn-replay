@@ -7,6 +7,7 @@ use Carp;
 use DBM::Deep;
 use File::Spec;
 use File::Find;
+use File::Path;
 use File::Slurp qw(write_file slurp);
 use Term::GentooFunctions qw(:all);
 use IPC::System::Simple qw(systemx capturex);
@@ -236,6 +237,8 @@ sub process_options {
         $create_svn_repo = File::Spec->rel2abs( $create_svn_repo );
 
         create_svn_repo($create_svn_repo => $co) if $create_svn_repo;
+        chdir $co or die "couldn't chdir into svnco($co): $!";
+
         add_svn_dir($_ => $co) for @add_dir_to_co;
 
         exit;
@@ -280,9 +283,37 @@ sub create_svn_repo {
 sub add_svn_dir {
     my ($cod, $co) = @_;
 
-    warn "\e[30;43mTODO: add svn dir: @_\e[m";
-    # (cd $cdir && mkdir $subdir && svn add $subdir)
-    # (cd $cdir && svn commit -m "initial build by svn_builder")
+    # NOTE: at this point, we're already chdir()ed into the $co
+
+    my $r = File::Spec->rel2abs( $cod );
+       $r =~ s/^\Q$co\E\///
+           or die "$cod doesn't want to be located under $co";
+
+    unless( -d $r ) {
+        ebegin "adding $cod to $co";
+        eindent
+
+        ebegin "mkdir -p $cod";
+        mkpath($r); # uses umask and 0777 to create
+        eend 1;
+
+        my @split = split m/\//, $r; $r = shift @split; {
+            ebegin "svn add $r";
+            logging_systemx(qw(svn add), $r);
+            eend 1;
+            if( @split ) {
+                $r .= "/" . (shift @split);
+                redo;
+            }
+        }
+
+        ebegin "[svn commit]";
+        logging_systemx(qw(svn commit -m), "git-svn-replay added $cod to $co");
+        eend 1;
+
+        eoutdent
+        eend 1;
+    }
 }
 # }}}
 
