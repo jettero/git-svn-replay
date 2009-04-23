@@ -301,10 +301,13 @@ sub add_svn_dir {
             ebegin "svn add $r";
             logging_systemx(qw(svn add), $r);
             eend 1;
-            if( @split ) {
-                $r .= "/" . (shift @split);
-                redo;
-            }
+
+         # NOTE: SVN apparnetly does this recursively
+         #  if( @split ) {
+         #      $r .= "/" . (shift @split);
+         #      redo;
+         #  }
+
         }
 
         ebegin "[svn commit]";
