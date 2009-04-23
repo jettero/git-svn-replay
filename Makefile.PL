@@ -34,6 +34,7 @@ WriteMakefile(
         LICENSE	=> 'GPL',
     ) : ()),
 
+    clean => { FILES => '*.repo *.co *.rdb' },
 );
 
 sub MY::postamble {
