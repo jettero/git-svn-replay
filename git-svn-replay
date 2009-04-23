@@ -237,11 +237,11 @@ __END__
 
 =head1 NAME
 
-git_svn_replay - replay git commits into a throwaway svn repo
+git-svn-replay - replay git commits into a throwaway svn repo
 
 =head1 SYNOPSIS
 
-  git_svn_replay [options] repo.git checked_out.svn
+  git-svn-replay [options] repo.git checked_out.svn
     -q: quiet operations
     -b: branch to pull (default: master)
     -d: database location (default: ./replay.rdb)

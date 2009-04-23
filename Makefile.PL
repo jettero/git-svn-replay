@@ -7,10 +7,10 @@ use warnings;
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
-    NAME          => 'git_svn_replay',
+    NAME          => 'git-svn-replay',
     AUTHOR        => 'Paul Miller <jettero@cpan.org>',
-    VERSION_FROM  => 'git_svn_replay',
-    EXE_FILES     => [ 'git_svn_replay' ],
+    VERSION_FROM  => 'git-svn-replay',
+    EXE_FILES     => [ 'git-svn-replay' ],
 
     PREREQ_PM => {
         'File::Slurp'           => 0,
@@ -27,7 +27,7 @@ WriteMakefile(
             META_MERGE => {
                 keywords => ['git', 'svn'],
                 resources=> {
-                    repository => 'http://github.com/jettero/git_svn_replay',
+                    repository => 'http://github.com/jettero/git-svn-replay',
                 },
             },
 
@@ -39,8 +39,8 @@ WriteMakefile(
 sub MY::postamble {
     my $postamble = <<'MAKE_FRAG';
 
-README: git_svn_replay
-	perl -MPod::Text -e '$p = Pod::Text->new (sentence => 0, width => 65); $p->select("DESCRIPTION"); $p->parse_from_file( git_svn_replay => "README");'
+README: git-svn-replay
+	perl -MPod::Text -e '$p = Pod::Text->new (sentence => 0, width => 65); $p->select("DESCRIPTION"); $p->parse_from_file( git-svn-replay => "README");'
 
 MAKE_FRAG
 
