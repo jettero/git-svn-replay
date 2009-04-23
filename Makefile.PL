@@ -6,8 +6,12 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker;
 
-(open POPEN_SVN, "svn help|" and open POPEN_GIT, "git help|" and close POPEN_SVN and close POPEN_GIT)
-    or die "\n git and svn must be installed and in our path for this tool to function.\n";
+$SIG{PIPE} = sub {}; 
+open POPEN_SVN, "svn help|" or die "git and svn must be installed and in our path for this tool to function."; 1 while <POPEN_SVN>;
+close POPEN_SVN             or die "git and svn must be installed and in our path for this tool to function.";
+
+open POPEN_GIT, "git help|" or die "git and svn must be installed and in our path for this tool to function."; 1 while <POPEN_GIT>;
+close POPEN_GIT             or die "git and svn must be installed and in our path for this tool to function.";
 
 WriteMakefile(
     NAME          => 'git-svn-replay',
