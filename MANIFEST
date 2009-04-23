@@ -1,7 +1,8 @@
+Changes
 git-svn-replay
 Makefile.PL
+MANIFEST
 note.txt
 README
 t/01_load.t
-MANIFEST
 t/05_svn_create_repo.t
