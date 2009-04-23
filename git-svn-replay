@@ -427,10 +427,10 @@ github.  I'm likely to notice either fairly quickly.
 
 Paul Miller C<< <jettero@cpan.org> >>
 
-=head2 COPYRIGHT
+=head1 COPYRIGHT
 
 Copyright 2009 Paul Miller -- released under the GPL
 
-=head2 SEE ALSO
+=head1 SEE ALSO
 
 perl(1), git(1), svn(1), L<DBM::Deep>, L<IPC::System::Simple>
