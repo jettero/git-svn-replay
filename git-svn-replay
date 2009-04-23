@@ -219,17 +219,45 @@ sub logging_systemx {
 
 # process_options {{{
 sub process_options {
-    my %o = ( 'q'=>\&quiet, 'h'=>sub{pod2usage(-verbose=>1)},
-        'b=s'=>\$srcbranch, 'd=s'=>\$dbfile, 'l=s'=>\$stdoutlog, 'f=s'=>\$patchformat,
+    my @add_dir_to_co;
+    my $create_svn_repo;
+
+    Getopt::Long::Configure("bundling"); # make switches case sensitive (and turn on bundling)
+
+    my %o = ( 'q' => \&quiet, 'h'=> sub{ pod2usage(-verbose=>1) },
+        'b=s' => \$srcbranch, 'd=s' => \$dbfile, 'l=s' => \$stdoutlog, 'f=s' => \$patchformat,
+        'S=s' => \$create_svn_repo, 's=s@' => \@add_dir_to_co,
     );
 
     GetOptions(%o) or pod2usage();
-    pod2usage unless @ARGV == 2;
+
+    if( $create_svn_repo or @add_dir_to_co ) {
+        my $co = shift @ARGV;
+        create_svn_repo($create_svn_repo => $co) if $create_svn_repo;
+        add_svn_dir($_ => $co) for @add_dir_to_co;
+        exit;
+    }
+
+    pod2usage() unless @ARGV == 2;
 
     my $g = shift @ARGV;
     my $s = File::Spec->rel2abs( shift @ARGV );
 
     return ($s, $g);
+}
+# }}}
+# create_svn_repo {{{
+sub create_svn_repo {
+    my ($svnr, $co) = @_;
+
+    warn "\e[30;43mTODO: add svn repo: @_\e[m";
+}
+# }}}
+# add_svn_dir {{{
+sub add_svn_dir {
+    my ($cod, $co) = @_;
+
+    warn "\e[30;43mTODO: add svn dir: @_\e[m";
 }
 # }}}
 
