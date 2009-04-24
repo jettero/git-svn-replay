@@ -12,8 +12,8 @@ ok( -d "s7.co/.svn" );
 ok( -d "s7.co/dir1" );
 ok( -d "s7.co/dir2" );
 
-ok( system($^X, "blib/script/git-svn-replay", "-S", "s7.repo", '-s', 'this/is/a/hard/test/yikes', "s7.co") => 0 );
+ok( system($^X, "blib/script/git-svn-replay", "-S", "s7.repo", '-s', 'testdir/yikes/hard/test/recursive', "s7.co") => 0 );
 ok( -d "s7.co/this/is/a/hard/test/yikes" );
 
-ok( system($^X, "blib/script/git-svn-replay", "-S", "s7.repo", '-s', 'this/is/a/hard/test/yikes/2', "s7.co") => 0 );
+ok( system($^X, "blib/script/git-svn-replay", "-S", "s7.repo", '-s', 'testdir/yikes/hard/test/recursive/2', "s7.co") => 0 );
 ok( -d "s7.co/this/is/a/hard/test/yikes/2" );
