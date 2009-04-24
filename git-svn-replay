@@ -91,7 +91,7 @@ sub replay {
     logging_systemx(qw(git checkout -q), $commit);
     eend 1;
 
-    ebegin "dumping commit log to .msg";    # subject [hash]\n\n body \n author <email>\n full-hash
+    ebegin "dumping commit log to .msg";
     write_file(".msg" => capturex(qw(git show -s), '--pretty=format:' . $patchformat));
     eend 1;
 
