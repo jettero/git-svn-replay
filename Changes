@@ -1,3 +1,6 @@
+1.0001: Fri Apr 24 07:31:16 EDT 2009
+   - converting the script to a module (mostly)
+
 1.0: Thu Apr 23 15:46:27 EDT 2009
    - I had released this before, but it was crap.
    - There are too many chagnes to list here, see github:
