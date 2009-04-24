@@ -266,11 +266,11 @@ sub create_svn_repo {
 sub add_svn_dir {
     my ($this, $cod) = @_;
 
-    my $co = File::Spec->rel2abs( $this->{svn_co} );
-    chdir $co or croak "couldn't chdir into svn_co ($this->{svn_co}): $!";
+    $this->{_co} ||= File::Spec->rel2abs( $this->{svn_co} );
+    chdir $this->{_co} or croak "couldn't chdir into svn_co ($this->{svn_co}): $!";
 
     my $r  = File::Spec->rel2abs( $cod );
-       $r =~ s/^\Q$co\E\///
+       $r =~ s/^\Q$this->{_co}\E\///
            or croak "$cod doesn't want to be located under $this->{svn_co}";
 
     unless( -d $r ) {
