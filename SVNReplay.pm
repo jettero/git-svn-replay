@@ -33,6 +33,14 @@ sub new {
     $this;
 }
 # }}}
+# set {{{
+sub set {
+    my $this = shift;
+    my %h = @_;
+    $this->{$_} = $h{$_} for keys %h;
+    $this;
+}
+# }}}
 # create_db {{{
 sub create_db {
     my $this = shift;
@@ -71,6 +79,8 @@ sub setup_git_in_svnco {
     ebegin "pulling updates from $this->{git_repo} ($this->{src_branch})";
     $this->logging_systemx(qw(git pull), $this->{git_repo}, "$this->{src_branch}:$this->{mirror_branch}");
     eend 1;
+
+    $this;
 }
 # }}}
 # run {{{
@@ -97,6 +107,8 @@ sub run {
 
         $cur ++;
     }
+
+    $this;
 }
 # }}}
 
@@ -245,6 +257,8 @@ sub create_svn_repo {
         $this->logging_systemx(qw(svn co), "file://$svn_repo", $this->{svn_co});
         eend 1;
     }
+
+    $this;
 }
 # }}}
 # add_svn_dir {{{
@@ -286,6 +300,8 @@ sub add_svn_dir {
         eoutdent
         eend 1;
     }
+
+    $this;
 }
 # }}}
 
@@ -295,6 +311,8 @@ sub stdoutlog {
     return unless $this->{stdoutlog};
 
     write_file( $this->{stdoutlog}, {append=>1}, scalar localtime, @_ );
+
+    $this;
 }
 # }}}
 # logging_systemx {{{
@@ -303,6 +321,8 @@ sub logging_systemx {
     my @res = eval { (capturex(@_), "my res pop") };
     croak $@ unless pop @res;
     $this->stdoutlog("-- execvp(@_)\n", @res);
+
+    $this;
 }
 # }}}
 
