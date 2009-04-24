@@ -4,6 +4,7 @@ Makefile.PL
 MANIFEST
 note.txt
 README
+SVNReplay.pm
 t/01_load.t
 t/05_svn_create_repo.t
 t/07_create_co_dirs.t
