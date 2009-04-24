@@ -5,6 +5,7 @@ use warnings;
 
 use Carp;
 use DBM::Deep;
+use File::Spec;
 use File::Find;
 use File::Slurp qw(write_file slurp);
 use Term::GentooFunctions qw(:all);
@@ -17,6 +18,9 @@ our %DEFAULTS = (
     patch_format  => '%s [%h]%n%n%b%n%aN <%aE>%n%ai%n%H',
     src_branch    => "master",
     mirror_branch => "mirror",
+    git_repo      => "g.repo",
+    svn_repo      => "s.repo",
+    svn_co        => "s.co",
 );
 
 # new {{{
@@ -35,10 +39,10 @@ sub create_db {
 
     my $TOP = new DBM::Deep($this->{db_file});
 
-    $TOP->{$this->{svnco}} = {}
-        unless $TOP->{$this->{svnco}};
+    $TOP->{$this->{svn_co}} = {}
+        unless $TOP->{$this->{svn_co}};
 
-    $this->{dbm} = $TOP->{$this->{svnco}};
+    $this->{dbm} = $TOP->{$this->{svn_co}};
 }
 # }}}
 
@@ -46,10 +50,10 @@ sub create_db {
 sub setup_git_in_svnco {
     my $this = shift;
 
-    chdir $this->{svnco} or die "couldn't chdir into svnco($this->{svnco}): $!";
+    chdir $this->{svn_co} or die "couldn't chdir into svn_co ($this->{svn_co}): $!";
 
-    if( not -d "$this->{svnco}/.git/" ) {
-        ebegin "cloning $this->{gitrepo} ($this->{src_branch})";
+    if( not -d "$this->{svn_co}/.git/" ) {
+        ebegin "cloning $this->{git_repo} ($this->{src_branch})";
         logging_systemx(qw(git init));
         logging_systemx(qw(git symbolic-ref HEAD), "refs/heads/$this->{mirror_branch}");
         eend 1;
@@ -62,8 +66,8 @@ sub setup_git_in_svnco {
 
     }
 
-    ebegin "pulling updates from $this->{gitrepo} ($this->{src_branch})";
-    logging_systemx(qw(git pull), $this->{gitrepo}, "$this->{src_branch}:$this->{mirror_branch}");
+    ebegin "pulling updates from $this->{git_repo} ($this->{src_branch})";
+    logging_systemx(qw(git pull), $this->{git_repo}, "$this->{src_branch}:$this->{mirror_branch}");
     eend 1;
 }
 # }}}
@@ -211,5 +215,77 @@ sub inform_svn {
 }
 # }}}
 
+
+# create_svn_repo {{{
+sub create_svn_repo {
+    my $this = shift;
+
+    my $svn_repo = File::Spec->rel2abs( $this->{svn_repo} );
+
+    # automatically skip anything we don't need to bother doing
+    unless( -d $svn_repo ) {
+        einfo "creating svn repo: $this->{svn_repo}";
+        logging_systemx(svnadmin => 'create', $svn_repo);
+        eend 1;
+
+        einfo "installing pre-revprop-change (svn:date only) hook";
+            my $prpc_file = "$svn_repo/hooks/pre-revprop-change";
+            my $prpc_text = slurp("$prpc_file.tmpl");
+               $prpc_text =~ s/svn:log/svn:date/g;
+
+            write_file( $prpc_file => $prpc_text );
+            chmod 0755, $prpc_file or die "chmod() error: $!";
+        eend 1;
+    }
+
+    unless( -d $this->{svn_co} ) {
+        einfo "checking out new svn: $this->{svn_repo} -> $this->{svn_co}";
+        logging_systemx(qw(svn co), "file://$svn_repo", $this->{svn_co});
+        eend 1;
+    }
+}
+# }}}
+# add_svn_dir {{{
+sub add_svn_dir {
+    my ($this, $cod) = @_;
+
+    # NOTE: at this point, we're already chdir()ed into the $co [TODO]
+
+    my $co = File::Spec->rel2abs( $this->{svn_co} );
+    my $r  = File::Spec->rel2abs( $cod );
+       $r =~ s/^\Q$co\E\///
+           or die "$cod doesn't want to be located under $this->{svn_co}";
+
+    unless( -d $r ) {
+        ebegin "adding $cod to $this->{svn_co}";
+        eindent
+
+        ebegin "mkdir -p $cod";
+        mkpath($r); # uses umask and 0777 to create
+        eend 1;
+
+        my @split = split m/\//, $r; $r = shift @split; {
+            ebegin "svn add $r";
+            logging_systemx(qw(svn add), $r);
+            eend 1;
+
+         # NOTE: SVN apparnetly does this recursively
+         #  if( @split ) {
+         #      $r .= "/" . (shift @split);
+         #      redo;
+         #  }
+
+        }
+
+        ebegin "[svn commit]";
+        logging_systemx(qw(svn commit -m), "git-svn-replay added $cod to $this->{svn_co}");
+        eend 1;
+
+        eoutdent
+        eend 1;
+    }
+}
+# }}}
+
 no warnings;
-"my codes are perfect (too)";
+"my codes are perfect (too)"; # I ♡ github.
