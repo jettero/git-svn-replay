@@ -14,9 +14,9 @@ open POPEN_GIT, "git help|" or die "git and svn must be installed and in our pat
 close POPEN_GIT             or die "git and svn must be installed and in our path for this tool to function.";
 
 WriteMakefile(
-    NAME          => 'git-svn-replay',
+    NAME          => 'Git::SVNReplay',
+    VERSION_FROM  => 'SVNReplay.pm',
     AUTHOR        => 'Paul Miller <jettero@cpan.org>',
-    VERSION_FROM  => 'git-svn-replay',
     EXE_FILES     => [ 'git-svn-replay' ],
 
     PREREQ_PM => {
