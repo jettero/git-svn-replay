@@ -306,5 +306,14 @@ sub logging_systemx {
 }
 # }}}
 
+# quiet {{{
+sub quiet {
+    *eend = *nop;
+    *einfo = *nop;
+    *ebegin = *nop;
+    *ewarn = *nop;
+}
+# }}}
+
 no warnings;
 "my codes are perfect (too)"; # I ♡ github.
