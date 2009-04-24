@@ -3,322 +3,38 @@
 use strict;
 use warnings;
 
-use Carp;
-use DBM::Deep;
-use File::Spec;
-use File::Find;
-use File::Path;
-use File::Slurp qw(write_file slurp);
-use Term::GentooFunctions qw(:all);
-use IPC::System::Simple qw(systemx capturex);
-use Date::Parse; # dates in (Date::Manip will not handle git/date-R time...)
-use POSIX; # dates out
+our $VERSION = 1.0001;
+
+use Git::SVNReplay;
 use Getopt::Long;
 use Pod::Usage;
 
-our $VERSION = 1.0001;
+Getopt::Long::Configure("bundling"); # make switches case sensitive (and turn on bundling)
 
-my $srcbranch   = "master";
-my $dbfile      = "replay.rdb";
-my $patchformat = '%s [%h]%n%n%b%n%aN <%aE>%n%ai%n%H';
-my $stdoutlog;
+my %gsr_opts;
+my $create_svn_repo;
+my @add_dir_to_co;
 
-my ($svnco, $gitrepo) = process_options();
+my %o = ( 'q' => \&Git::SVNReplay::quiet, 'h'=> sub{ pod2usage(-verbose=>1) },
+    'b=s' => \$gsr_opts{src_branch}, 'd=s' => \$gsr_opts{db_file}, 'l=s' => \$gsr_opts{stdoutlog},
+    'f=s' => \$gsr_opts{patch_format}, 'S=s' => \$create_svn_repo, 's=s@' => \@add_dir_to_co,
+);
 
-my $TOP = new DBM::Deep($dbfile); $TOP->{$svnco} = {} unless $TOP->{$svnco};
-my $dbm = $TOP->{$svnco};
+GetOptions(%o) or pod2usage();
+for(keys %gsr_opts) { delete $gsr_opts{$_} unless defined $gsr_opts{$_} }
 
-my $progress; # cheap way to propagate completeness info to all info messages
+my $gsr = Git::SVNReplay->new( %gsr_opts );
 
-setup();
-run();
+if( $create_svn_repo or @add_dir_to_co ) {
+    $gsr->set( svn_co   => shift @ARGV ) if @ARGV;
+    $gsr->set( svn_repo => $create_svn_repo )->create_svn_repo if $create_svn_repo;
+    $gsr->add_svn_dir($_) for @add_dir_to_co;
 
-# setup {{{
-sub setup {
-    chdir $svnco or die "couldn't chdir into svnco($svnco): $!";
-
-    if( not -d "$svnco/.git/" ) {
-        ebegin "cloning $gitrepo ($srcbranch)";
-        logging_systemx(qw(git init));
-        logging_systemx(qw(git symbolic-ref HEAD refs/heads/mirror));
-        eend 1;
-
-    } else {
-        ebegin "resettting mirror";
-        logging_systemx(qw(git checkout -q mirror));
-        logging_systemx(qw(git reset --hard));
-        eend 1;
-
-    }
-
-    ebegin "pulling updates from $gitrepo ($srcbranch)";
-    logging_systemx(qw(git pull), $gitrepo, "$srcbranch:mirror");
-    eend 1;
+} else {
+    $gsr->set( git_repo => shift @ARGV ) if @ARGV;
+    $gsr->set( svn_co   => shift @ARGV ) if @ARGV;
+    $gsr->setup_git_in_svnco->run;
 }
-# }}}
-# run {{{
-sub run {
-    my @commits = capturex(qw(git rev-list --reverse mirror)); chomp @commits;
-       @commits = grep { !$dbm->{already_replayed}{$_} } @commits;
-
-    my $total = @commits;
-    my $cur = 1;
-
-    for my $commit ( @commits ) {
-        $progress = "[$cur/$total]:$commit";
-
-        if( replay($commit) and inform_svn($commit) ) {
-            push @{ $dbm->{replayed_commits_in_order} }, $commit;
-            $dbm->{already_replayed}{$commit} = 1
-
-        } else {
-            edie("no point in continuing, something is wrong");
-        }
-
-        $cur ++;
-    }
-}
-# }}}
-
-# replay {{{
-sub replay {
-    my ($commit) = @_;
-
-    einfo "REPLAY $progress";
-    eindent;
-
-    einfo "git checkout";
-    logging_systemx(qw(git checkout -q), $commit);
-    eend 1;
-
-    ebegin "dumping commit log to .msg";
-    write_file(".msg" => capturex(qw(git show -s), '--pretty=format:' . $patchformat));
-    eend 1;
-
-    eoutdent;
-    return 1;
-}
-# }}}
-# inform_svn {{{
-sub inform_svn {
-    my ($commit) = @_;
-
-    einfo "INFORM $progress";
-    eindent;
-
-    my @files;
-    my @dirs;
-
-    &File::Find::find({wanted => sub {
-        if( -f $_ ) {
-            unless( $_ eq ".msg" ) {
-                push @files, $File::Find::name;
-            }
-
-        } elsif( -d _ ) {
-            if( m/^\.(?:git|svn)\z/ ) {
-                $File::Find::prune = 1;
-
-            } elsif( not m/^\.{1,2}\z/ ) {
-                push @dirs, $File::Find::name;
-            }
-        }
-
-    }}, '.' );
-
-    if( my $parent = $dbm->{replayed_commits_in_order}[-1] ) {
-        for my $f (@{ $dbm->{last_files}{$parent} }) {
-            unless( -f $f ) {
-                einfo "removing file \"$f\" from svn:  ";
-                logging_systemx(qw(svn rm), $f);
-                eend 1;
-
-                $dbm->{already_tracking_file}{$f} = 0;
-            }
-        }
-        for my $d (@{ $dbm->{last_dirs}{$parent} }) {
-            unless( -d $d ) {
-                einfo "removing directory \"$d\" from svn:  ";
-                logging_systemx(qw(svn rm), $d);
-                eend 1;
-
-                $dbm->{already_tracking_dir}{$d} = 0;
-            }
-        }
-    }
-
-    for my $d (@dirs) {
-        next if $dbm->{already_tracking_dir}{$d};
-
-        einfo "adding directory \"$d\" to svn:  ";
-        logging_systemx(qw(svn add), $d);
-        eend 1;
-
-        $dbm->{already_tracking_dir}{$d} = 1;
-    }
-
-    for my $f (@files) {
-        next if $dbm->{already_tracking_file}{$f};
-
-        einfo "adding file \"$f\" to svn:  ";
-        logging_systemx(qw(svn add), $f);
-        eend 1;
-
-        $dbm->{already_tracking_file}{$f} = 1;
-    }
-
-    ebegin "comitting changes to svn";
-    logging_systemx(qw(svn commit -F .msg));
-    eend 1;
-
-    if( my $gdate = capturex(qw(git show -s --pretty=format:%at)) ) {
-        my $date = strftime('%Y-%m-%dT%H:%M:%S.000000Z', gmtime($gdate));
-
-        ebegin "changing commit date to $date";
-        logging_systemx(qw(svn propset --revprop -r HEAD svn:date), $date);
-        eend 1;
-
-    } else {
-        ewarn "date not found for $commit";
-    }
-
-    $dbm->{last_dirs}{$commit}  = \@dirs;
-    $dbm->{last_files}{$commit} = \@files;
-
-    # svn commits sometimes alters things causing git merge problems (very rare).
-    # This resets everything that's tracked by git.
-    logging_systemx(qw(git reset --hard));
-
-    eoutdent;
-    return 1;
-}
-# }}}
-
-# quiet {{{
-sub nop { print @_, "\n" }
-sub quiet {
-    *eend = *nop;
-    *einfo = *nop;
-    *ebegin = *nop;
-    *ewarn = *nop;
-}
-# }}}
-# stdoutlog {{{
-sub stdoutlog {
-    return unless $stdoutlog;
-
-    write_file( $stdoutlog, {append=>1}, scalar localtime, @_ );
-}
-# }}}
-# logging_systemx {{{
-sub logging_systemx {
-    my @res = eval { (capturex(@_), "my res pop") };
-    croak $@ unless pop @res;
-    stdoutlog("-- execvp(@_)\n", @res);
-}
-# }}}
-
-# process_options {{{
-sub process_options {
-    my @add_dir_to_co;
-    my $create_svn_repo;
-
-    Getopt::Long::Configure("bundling"); # make switches case sensitive (and turn on bundling)
-
-    my %o = ( 'q' => \&quiet, 'h'=> sub{ pod2usage(-verbose=>1) },
-        'b=s' => \$srcbranch, 'd=s' => \$dbfile, 'l=s' => \$stdoutlog, 'f=s' => \$patchformat,
-        'S=s' => \$create_svn_repo, 's=s@' => \@add_dir_to_co,
-    );
-
-    GetOptions(%o) or pod2usage();
-
-    if( $create_svn_repo or @add_dir_to_co ) {
-        my $co           = File::Spec->rel2abs( shift @ARGV );
-        $create_svn_repo = File::Spec->rel2abs( $create_svn_repo );
-
-        create_svn_repo($create_svn_repo => $co) if $create_svn_repo;
-        chdir $co or die "couldn't chdir into svnco($co): $!";
-
-        add_svn_dir($_ => $co) for @add_dir_to_co;
-
-        exit;
-    }
-
-    pod2usage() unless @ARGV == 2;
-
-    my $g = shift @ARGV;
-    my $s = File::Spec->rel2abs( shift @ARGV );
-
-    return ($s, $g);
-}
-# }}}
-# create_svn_repo {{{
-sub create_svn_repo {
-    my ($svnr, $co) = @_;
-
-    # automatically skip anything we don't need to bother doing
-    unless( -d $svnr ) {
-        einfo "creating svn repo: $svnr";
-        logging_systemx(svnadmin => 'create', $svnr);
-        eend 1;
-
-        einfo "installing pre-revprop-change (svn:date only) hook";
-            my $prpc_file = "$svnr/hooks/pre-revprop-change";
-            my $prpc_text = slurp("$prpc_file.tmpl");
-               $prpc_text =~ s/svn:log/svn:date/g;
-
-            write_file( $prpc_file => $prpc_text );
-            chmod 0755, $prpc_file or die "chmod() error: $!";
-        eend 1;
-    }
-
-    unless( -d $co ) {
-        einfo "checking out new svn: $svnr -> $co";
-        logging_systemx(qw(svn co), "file://$svnr", $co);
-        eend 1;
-    }
-}
-# }}}
-# add_svn_dir {{{
-sub add_svn_dir {
-    my ($cod, $co) = @_;
-
-    # NOTE: at this point, we're already chdir()ed into the $co
-
-    my $r = File::Spec->rel2abs( $cod );
-       $r =~ s/^\Q$co\E\///
-           or die "$cod doesn't want to be located under $co";
-
-    unless( -d $r ) {
-        ebegin "adding $cod to $co";
-        eindent
-
-        ebegin "mkdir -p $cod";
-        mkpath($r); # uses umask and 0777 to create
-        eend 1;
-
-        my @split = split m/\//, $r; $r = shift @split; {
-            ebegin "svn add $r";
-            logging_systemx(qw(svn add), $r);
-            eend 1;
-
-         # NOTE: SVN apparnetly does this recursively
-         #  if( @split ) {
-         #      $r .= "/" . (shift @split);
-         #      redo;
-         #  }
-
-        }
-
-        ebegin "[svn commit]";
-        logging_systemx(qw(svn commit -m), "git-svn-replay added $cod to $co");
-        eend 1;
-
-        eoutdent
-        eend 1;
-    }
-}
-# }}}
 
 __END__
 
@@ -328,27 +44,25 @@ git-svn-replay - replay git commits into a throwaway svn repo
 
 =head1 SYNOPSIS
 
-  git-svn-replay [options] repo.git checked_out.svn
-              or -S ... check_out.svn
-              or -s ... checked_out.svn
+  git-svn-replay [options] [git.repo] [checked_out.svn]
+              or -S svn.repo [checked_out.svn]
+              or -s dirname [checked_out.svn]
 
     -q: quiet operations
     -b: branch to pull (default: master)
-    -d: database location (default: ./replay.rdb)
+    -d: database (default: ./replay.rdb)
     -l: stdout logfile (default: /dev/null)
     -f: .msg format
     -S: create an svn repo and check it out
-    -s: directory to add to the svn repo
+    -s: directory to add to the svn repo (can be specified more than once)
     -h: help
 
-B<repo.git>: The source repo will be untouched, can be remote or local, all git
-urls will work just fine.
-
-B<replay.db>: The location of the L<DBM::Deep> commit database.
+B<git.repo>: The source repo will be untouched, can be remote or local, all git
+urls will work just fine (default ./g.repo).
 
 B<checked_out.svn>: This will issue svn commands to the checked_out.svn (and
-the corresponding repo).  It is assumed this is a throwaway repo used for
-nothing besides interacting with trac.
+the corresponding repo) (default: ./s.co).  It is assumed this is a throwaway
+repo used for nothing besides interacting with trac.
 
 =head1 DESCRIPTION
 
@@ -409,15 +123,19 @@ it's:
 Create an svn repo and check it out.  It is harmless to specify this if the
 repo already exists -- it will simply skip the creation.
 
-When B<-S> is specified, you may not specify a git repo to pull from, but you
-must specify a location to check out the new svn.
+When B<-S> is specified, no replays will be performed and the first non-switch
+argument is assumed to be the checked out location, not a git repo.  You may
+specify B<-s> switches along with B<-S>.  The repo will not be (re)created if
+it is already there.
 
 =item B<-s> subdirname
 
 Add a subdirectory to the checked out svn.
 
-When B<-s> is specified, you may not specify a git repo to pull from, but you
-must specify a location where the svn subdir should be added.
+When B<-s> is specified, no replays will be performed and the first non-switch
+argument is assumed to be the checked out location, not a git repo.  You may
+specify more than one B<-s>.  The directory will not be (re)added if it is
+already there.
 
 =back
 
@@ -438,7 +156,7 @@ Create an svn repo, check it out, and pull the public branch of repo.git into it
 
 Create an svn repo, check it out, create a dir for proj1, another for proj2 ...:
 
-    git svn-replay -S s.repo -s proj1 -s proj2 s.co 
+    git svn-replay -S s.repo -s proj1 -s proj2 s.co
     git svn-replay -b public proj1-repo.git s.co/proj1 # do this from cron
     git svn-replay -b maint  proj2-repo.git s.co/proj2 # do this from cron
 
