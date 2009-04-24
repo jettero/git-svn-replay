@@ -3,6 +3,8 @@ use Test;
 
 plan tests => 11;
 
+die "re-test requires clean" if -d "s7.repo";
+
 ok( system($^X, '-Iblib/lib', "blib/script/git-svn-replay", "-S", "s5.repo", (map {('-s', $_)} qw(dir1 dir2)), "s5.co") => 0 );
 ok( -d "s5.co/dir1" );
 ok( -d "s5.co/dir2" );
