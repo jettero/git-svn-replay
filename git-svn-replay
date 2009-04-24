@@ -404,8 +404,6 @@ it's:
     Paul Miller <jettero@cpan.org>
     ddc7db5df1261cfef79b8bfce524a7b7452ac95d.
 
-=back
-
 =item B<-S> svnreponame
 
 Create an svn repo and check it out.  It is harmless to specify this if the
@@ -420,6 +418,8 @@ Add a subdirectory to the checked out svn.
 
 When B<-s> is specified, you may not specify a git repo to pull from, but you
 must specify a location where the svn subdir should be added.
+
+=back
 
 =head1 EXAMPLES
 
