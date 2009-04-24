@@ -185,4 +185,4 @@ Copyright 2009 Paul Miller -- released under the GPL
 
 =head1 SEE ALSO
 
-perl(1), git(1), svn(1), L<DBM::Deep>, L<IPC::System::Simple>
+perl(1), git(1), svn(1), L<Git::SVNReplay>, L<DBM::Deep>, L<IPC::System::Simple>

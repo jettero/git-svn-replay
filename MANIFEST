@@ -1,5 +1,6 @@
 Changes
 git-svn-replay
+lib/Git/SVNReplay.pod
 Makefile.PL
 MANIFEST
 note.txt
