@@ -333,6 +333,8 @@ sub quiet {
     *einfo = *nop;
     *ebegin = *nop;
     *ewarn = *nop;
+
+    $_[0];
 }
 # }}}
 
