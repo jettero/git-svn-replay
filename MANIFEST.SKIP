@@ -1,4 +1,4 @@
-^Distro$
+^.pm-desc.html$
 ^MANIFEST.SKIP$
 ^.git
 ^Git$
