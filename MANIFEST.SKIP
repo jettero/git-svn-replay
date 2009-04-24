@@ -1,3 +1,4 @@
 ^Distro$
 ^MANIFEST.SKIP$
 ^.git
+^Git$
