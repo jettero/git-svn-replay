@@ -60,7 +60,7 @@ sub create_db {
 sub setup_git_in_svnco {
     my $this = shift;
 
-    chdir $this->{svn_co} or die "couldn't chdir into svn_co ($this->{svn_co}): $!";
+    chdir $this->{svn_co} or croak "couldn't chdir into svn_co ($this->{svn_co}): $!";
 
     if( not -d "$this->{svn_co}/.git/" ) {
         ebegin "cloning $this->{git_repo} ($this->{src_branch})";
@@ -248,7 +248,7 @@ sub create_svn_repo {
                $prpc_text =~ s/svn:log/svn:date/g;
 
             write_file( $prpc_file => $prpc_text );
-            chmod 0755, $prpc_file or die "chmod() error: $!";
+            chmod 0755, $prpc_file or croak "chmod() error: $!";
         eend 1;
     }
 
@@ -268,9 +268,9 @@ sub add_svn_dir {
     my $co = File::Spec->rel2abs( $this->{svn_co} );
     my $r  = File::Spec->rel2abs( $cod );
        $r =~ s/^\Q$co\E\///
-           or die "$cod doesn't want to be located under $this->{svn_co}";
+           or croak "$cod doesn't want to be located under $this->{svn_co}";
 
-    chdir $co or die "couldn't chdir into svn_co ($this->{svn_co}): $!";
+    chdir $co or croak "couldn't chdir into svn_co ($this->{svn_co}): $!";
 
     unless( -d $r ) {
         ebegin "adding $cod to $this->{svn_co}";
