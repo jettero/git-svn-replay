@@ -7,6 +7,7 @@ use Carp;
 use DBM::Deep;
 use File::Spec;
 use File::Find;
+use File::Path;
 use File::Slurp qw(write_file slurp);
 use Term::GentooFunctions qw(:all);
 use IPC::System::Simple qw(systemx capturex);
