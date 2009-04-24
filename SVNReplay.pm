@@ -293,7 +293,7 @@ sub add_svn_dir {
 
         }
 
-        ebegin "[svn commit]";
+        ebegin "svn commit";
         $this->logging_systemx(qw(svn commit -m), "git-svn-replay added $cod to $this->{svn_co}");
         eend 1;
 
