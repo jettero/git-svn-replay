@@ -13,7 +13,7 @@ ok( -d "s7.co/dir1" );
 ok( -d "s7.co/dir2" );
 
 ok( system($^X, '-Iblib/lib', "blib/script/git-svn-replay", "-S", "s7.repo", '-s', 'testdir/yikes/hard/test/recursive', "s7.co") => 0 );
-ok( -d "s7.co/this/is/a/hard/test/yikes" );
+ok( -d "s7.co/testdir/yikes/hard/test/recursive" );
 
 ok( system($^X, '-Iblib/lib', "blib/script/git-svn-replay", "-S", "s7.repo", '-s', 'testdir/yikes/hard/test/recursive/2', "s7.co") => 0 );
-ok( -d "s7.co/this/is/a/hard/test/yikes/2" );
+ok( -d "s7.co/testdir/yikes/hard/test/recursive/2" );
