@@ -56,20 +56,20 @@ sub setup_git_in_svnco {
 
     if( not -d "$this->{svn_co}/.git/" ) {
         ebegin "cloning $this->{git_repo} ($this->{src_branch})";
-        logging_systemx(qw(git init));
-        logging_systemx(qw(git symbolic-ref HEAD), "refs/heads/$this->{mirror_branch}");
+        $this->logging_systemx(qw(git init));
+        $this->logging_systemx(qw(git symbolic-ref HEAD), "refs/heads/$this->{mirror_branch}");
         eend 1;
 
     } else {
         ebegin "resettting mirror";
-        logging_systemx(qw(git checkout -q), $this->{mirror_branch});
-        logging_systemx(qw(git reset --hard));
+        $this->logging_systemx(qw(git checkout -q), $this->{mirror_branch});
+        $this->logging_systemx(qw(git reset --hard));
         eend 1;
 
     }
 
     ebegin "pulling updates from $this->{git_repo} ($this->{src_branch})";
-    logging_systemx(qw(git pull), $this->{git_repo}, "$this->{src_branch}:$this->{mirror_branch}");
+    $this->logging_systemx(qw(git pull), $this->{git_repo}, "$this->{src_branch}:$this->{mirror_branch}");
     eend 1;
 }
 # }}}
@@ -108,7 +108,7 @@ sub replay {
     eindent;
 
     einfo "git checkout";
-    logging_systemx(qw(git checkout -q), $commit);
+    $this->logging_systemx(qw(git checkout -q), $commit);
     eend 1;
 
     ebegin "dumping commit log to .msg";
@@ -151,7 +151,7 @@ sub inform_svn {
         for my $f (@{ $this->{dbm}{last_files}{$parent} }) {
             unless( -f $f ) {
                 einfo "removing file \"$f\" from svn:  ";
-                logging_systemx(qw(svn rm), $f);
+                $this->logging_systemx(qw(svn rm), $f);
                 eend 1;
 
                 $this->{dbm}{already_tracking_file}{$f} = 0;
@@ -161,7 +161,7 @@ sub inform_svn {
         for my $d (@{ $this->{dbm}{last_dirs}{$parent} }) {
             unless( -d $d ) {
                 einfo "removing directory \"$d\" from svn:  ";
-                logging_systemx(qw(svn rm), $d);
+                $this->logging_systemx(qw(svn rm), $d);
                 eend 1;
 
                 $this->{dbm}{already_tracking_dir}{$d} = 0;
@@ -173,7 +173,7 @@ sub inform_svn {
         next if $this->{dbm}{already_tracking_dir}{$d};
 
         einfo "adding directory \"$d\" to svn:  ";
-        logging_systemx(qw(svn add), $d);
+        $this->logging_systemx(qw(svn add), $d);
         eend 1;
 
         $this->{dbm}{already_tracking_dir}{$d} = 1;
@@ -183,21 +183,21 @@ sub inform_svn {
         next if $this->{dbm}{already_tracking_file}{$f};
 
         einfo "adding file \"$f\" to svn:  ";
-        logging_systemx(qw(svn add), $f);
+        $this->logging_systemx(qw(svn add), $f);
         eend 1;
 
         $this->{dbm}{already_tracking_file}{$f} = 1;
     }
 
     ebegin "comitting changes to svn";
-    logging_systemx(qw(svn commit -F .msg));
+    $this->logging_systemx(qw(svn commit -F .msg));
     eend 1;
 
     if( my $gdate = capturex(qw(git show -s --pretty=format:%at)) ) {
         my $date = strftime('%Y-%m-%dT%H:%M:%S.000000Z', gmtime($gdate));
 
         ebegin "changing commit date to $date";
-        logging_systemx(qw(svn propset --revprop -r HEAD svn:date), $date);
+        $this->logging_systemx(qw(svn propset --revprop -r HEAD svn:date), $date);
         eend 1;
 
     } else {
@@ -209,7 +209,7 @@ sub inform_svn {
 
     # svn commits sometimes alters things causing git merge problems (very rare).
     # This resets everything that's tracked by git.
-    logging_systemx(qw(git reset --hard));
+    $this->logging_systemx(qw(git reset --hard));
 
     eoutdent;
 
@@ -227,7 +227,7 @@ sub create_svn_repo {
     # automatically skip anything we don't need to bother doing
     unless( -d $svn_repo ) {
         einfo "creating svn repo: $this->{svn_repo}";
-        logging_systemx(svnadmin => 'create', $svn_repo);
+        $this->logging_systemx(svnadmin => 'create', $svn_repo);
         eend 1;
 
         einfo "installing pre-revprop-change (svn:date only) hook";
@@ -242,7 +242,7 @@ sub create_svn_repo {
 
     unless( -d $this->{svn_co} ) {
         einfo "checking out new svn: $this->{svn_repo} -> $this->{svn_co}";
-        logging_systemx(qw(svn co), "file://$svn_repo", $this->{svn_co});
+        $this->logging_systemx(qw(svn co), "file://$svn_repo", $this->{svn_co});
         eend 1;
     }
 }
@@ -268,7 +268,7 @@ sub add_svn_dir {
 
         my @split = split m/\//, $r; $r = shift @split; {
             ebegin "svn add $r";
-            logging_systemx(qw(svn add), $r);
+            $this->logging_systemx(qw(svn add), $r);
             eend 1;
 
          # NOTE: SVN apparnetly does this recursively
@@ -280,12 +280,29 @@ sub add_svn_dir {
         }
 
         ebegin "[svn commit]";
-        logging_systemx(qw(svn commit -m), "git-svn-replay added $cod to $this->{svn_co}");
+        $this->logging_systemx(qw(svn commit -m), "git-svn-replay added $cod to $this->{svn_co}");
         eend 1;
 
         eoutdent
         eend 1;
     }
+}
+# }}}
+
+# stdoutlog {{{
+sub stdoutlog {
+    my $this = shift;
+    return unless $this->{stdoutlog};
+
+    write_file( $this->{stdoutlog}, {append=>1}, scalar localtime, @_ );
+}
+# }}}
+# logging_systemx {{{
+sub logging_systemx {
+    my $this = shift;
+    my @res = eval { (capturex(@_), "my res pop") };
+    croak $@ unless pop @res;
+    $this->stdoutlog("-- execvp(@_)\n", @res);
 }
 # }}}
 
