@@ -84,7 +84,7 @@ itself for chains.
 
 =head2 quiet
 
-Turn off all L<Term::GentooFunction> racket.  Returns itself so you may use the
+Turn off all L<Term::GentooFunctions> racket.  Returns itself so you may use the
 function in chains.
 
 =head1 REPORTING BUGS
