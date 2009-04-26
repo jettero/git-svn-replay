@@ -125,7 +125,7 @@ sub replay {
     eend 1;
 
     ebegin "dumping commit log to .msg";
-    write_file(".msg" => capturex(qw(git show -s), '--pretty=format:' . $this->{patchformat}));
+    write_file(".msg" => capturex(qw(git show -s), '--pretty=format:' . $this->{patch_format}));
     eend 1;
 
     eoutdent;
