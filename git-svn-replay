@@ -31,6 +31,7 @@ if( $create_svn_repo or @add_dir_to_co ) {
     $gsr->add_svn_dir($_) for @add_dir_to_co;
 
 } else {
+    pod2usage() if not @ARGV and not -d $Git::SVNReplay::DEFAULTS{svn_co};
     $gsr->set( git_repo => shift @ARGV ) if @ARGV;
     $gsr->set( svn_co   => shift @ARGV ) if @ARGV;
     $gsr->setup_git_in_svnco->run;
