@@ -3,7 +3,6 @@ package Git::SVNReplay;
 use strict;
 use warnings;
 
-use Carp;
 use DBM::Deep;
 use File::Spec;
 use File::Find;
@@ -61,7 +60,8 @@ sub create_db {
 sub setup_git_in_svnco {
     my $this = shift;
 
-    chdir $this->{svn_co} or croak "couldn't chdir into svn_co ($this->{svn_co}): $!";
+    my $repo = $this->{git_repo}; $repo = File::Spec->rel2abs($repo) if -d $repo;
+    chdir $this->{svn_co} or edie "couldn't chdir into svn_co ($this->{svn_co}): $!";
 
     if( not -d "$this->{svn_co}/.git/" ) {
         ebegin "cloning $this->{git_repo} ($this->{src_branch})";
@@ -78,7 +78,7 @@ sub setup_git_in_svnco {
     }
 
     ebegin "pulling updates from $this->{git_repo} ($this->{src_branch})";
-    $this->logging_systemx(qw(git pull), $this->{git_repo}, "$this->{src_branch}:$this->{mirror_branch}");
+    $this->logging_systemx(qw(git pull), $repo, "$this->{src_branch}:$this->{mirror_branch}");
     eend 1;
 
     $this;
@@ -249,7 +249,7 @@ sub create_svn_repo {
                $prpc_text =~ s/svn:log/svn:date/g;
 
             write_file( $prpc_file => $prpc_text );
-            chmod 0755, $prpc_file or croak "chmod() error: $!";
+            chmod 0755, $prpc_file or edie "chmod() error: $!";
         eend 1;
     }
 
@@ -267,11 +267,11 @@ sub add_svn_dir {
     my ($this, $cod) = @_;
 
     $this->{_co} ||= File::Spec->rel2abs( $this->{svn_co} );
-    chdir $this->{_co} or croak "couldn't chdir into svn_co ($this->{svn_co}): $!";
+    chdir $this->{_co} or edie "couldn't chdir into svn_co ($this->{svn_co}): $!";
 
     my $r  = File::Spec->rel2abs( $cod );
        $r =~ s/^\Q$this->{_co}\E\///
-           or croak "$cod doesn't want to be located under $this->{svn_co}";
+           or edie "$cod doesn't want to be located under $this->{svn_co}";
 
     unless( -d $r ) {
         ebegin "adding $cod to $this->{svn_co}";
@@ -319,8 +319,12 @@ sub stdoutlog {
 # logging_systemx {{{
 sub logging_systemx {
     my $this = shift;
-    my @res = eval { (capturex(@_), "my res pop") };
-    croak $@ unless pop @res;
+    my @res = eval { (capturex(@_), "my res pop") }; my $l = __LINE__;
+    my @c = caller;
+    unless( pop @res ) {
+        my $e = $@; $e =~ s/line $l/$c[2]/g;
+        edie $e;
+    }
     $this->stdoutlog("-- execvp(@_)\n", @res);
 
     $this;
