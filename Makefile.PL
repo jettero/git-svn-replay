@@ -45,6 +45,8 @@ WriteMakefile(
     clean => { FILES => '*.repo *.co *.rdb dist' },
 );
 
+no warnings 'redefine';
+eval q
 sub MY::postamble {
     my $postamble = <<'MAKE_FRAG';
 
@@ -55,5 +57,6 @@ MAKE_FRAG
 
     return $postamble;
 }
+;
 
 1;
