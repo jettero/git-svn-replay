@@ -1,8 +1,9 @@
 1.0200: Sat Apr 25 21:34:30 EDT 2009
    - if no arguments and no dir to cd into, just show the help
-   - replaced all croaks (misleading/meaningless) with meaninful and not misleading edie
-   - fixed a git-repo-assumption, namely, relative path git repos
-     won't be where you'd think once you cd into the svn.co
+   - replaced all croaks (misleading/meaningless) with meaninful and not
+     misleading edie
+   - fixed a git-repo-assumption, namely, relative path git repos won't be
+     where you'd think once you cd into the svn.co
    - fixed a bad format bug
 
 
@@ -12,6 +13,6 @@
 1.0: Thu Apr 23 15:46:27 EDT 2009
    - I had released this before, but it was crap.
    - There are too many chagnes to list here, see github:
-     http://github.com/jettero/git-svn-replay/
-     (Also, please ignore previous versions.)
+     http://github.com/jettero/git-svn-replay/ (Also, please ignore previous
+     versions.)
      
