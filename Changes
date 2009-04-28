@@ -1,3 +1,6 @@
+1.0210: Mon Apr 27 21:46:06 EDT 2009
+   - fixed vile bugs in the .pm -- they were obviated by changes to T::GF
+
 1.0200: Sat Apr 25 21:34:30 EDT 2009
    - if no arguments and no dir to cd into, just show the help
    - replaced all croaks (misleading/meaningless) with meaninful and not

@@ -13,7 +13,7 @@ use IPC::System::Simple qw(systemx capturex);
 use Date::Parse; # dates in (Date::Manip will not handle git/date-R time...)
 use POSIX; # dates out
 
-our $VERSION = '1.0200';
+our $VERSION = '1.0210';
 
 our %DEFAULTS = (
     db_file       => "replay.rdb",
