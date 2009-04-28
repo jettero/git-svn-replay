@@ -1,4 +1,5 @@
-^.pm-desc.html$
-^MANIFEST.SKIP$
-^.git
+^\.git
 ^Git$
+^MANIFEST\.SKIP$
+^\.pm-desc.html$
+^\.st$
