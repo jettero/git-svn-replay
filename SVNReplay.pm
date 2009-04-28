@@ -275,7 +275,7 @@ sub add_svn_dir {
 
     unless( -d $r ) {
         ebegin "adding $cod to $this->{svn_co}";
-        eindent
+        eindent;
 
         ebegin "mkdir -p $cod";
         mkpath($r); # uses umask and 0777 to create
@@ -298,7 +298,7 @@ sub add_svn_dir {
         $this->logging_systemx(qw(svn commit -m), "git-svn-replay added $cod to $this->{svn_co}");
         eend 1;
 
-        eoutdent
+        eoutdent;
         eend 1;
     }
 
