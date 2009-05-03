@@ -15,7 +15,7 @@ close POPEN_SVN             or $pfft ++;
 open POPEN_GIT, "git help|" or $pfft ++; 1 while <POPEN_GIT>;
 close POPEN_GIT             or $pfft ++;
 
-if( 1 or $pfft ) {
+if( $pfft ) {
     open SKIP, ">SKIP_MOST_TESTS"; close SKIP;
 }
 
