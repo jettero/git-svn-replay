@@ -1,7 +1,13 @@
 
 use Test;
 
-plan tests => 4;
+plan tests => my $tests = 4;
+
+if( -f 'SKIP_MOST_TESTS' ) {
+    warn " git and/or svn missing, skipping mosts tests\n";
+    skip(1,1,1) for 1 .. $tests;
+    exit 0;
+}
 
 die "re-test requires clean" if -d "s5.repo";
 
