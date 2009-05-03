@@ -11,7 +11,7 @@ my @r = (
     '^A\s+s9\.co/testdir/yikes/hard$',
     '^A\s+s9\.co/testdir/yikes/hard/test$',
     '^A\s+s9\.co/testdir/yikes/hard/test/recursive$',
-    'revision 3',
+    '\b3\.$',
 );
 
 plan tests => my $tests = int @r;
