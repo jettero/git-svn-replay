@@ -1,3 +1,6 @@
+1.0211: Sun May  3 17:22:29 EDT 2009
+   - fixed a bunch of bad assumptions in the tests.
+
 1.0210: Mon Apr 27 21:46:06 EDT 2009
    - fixed vile bugs in the .pm -- they were obviated by changes to T::GF
 
