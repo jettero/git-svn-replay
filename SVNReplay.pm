@@ -333,11 +333,12 @@ sub logging_systemx {
 
 # quiet {{{
 sub quiet {
-    my $nop = sub {};
-    *eend   = $nop;
-    *einfo  = $nop;
-    *ebegin = $nop;
-    *ewarn  = $nop;
+    no warnings 'redefine';
+
+    *eend   = sub(@) {};
+    *einfo  = sub($) {};
+    *ebegin = sub($) {};
+    *ewarn  = sub($) {};
 
     $_[0];
 }
