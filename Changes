@@ -1,3 +1,6 @@
+1.0214: Fri Oct 02 2009
+   - the -q option was borked, fixed
+
 1.0213: Mon Jul 20 2009
    - I made the makefile smarter about svn permissions to avoid
      test problems

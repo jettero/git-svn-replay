@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-our $VERSION = '1.0213';
+our $VERSION = '1.0214';
 
 use Git::SVNReplay;
 use Getopt::Long;
